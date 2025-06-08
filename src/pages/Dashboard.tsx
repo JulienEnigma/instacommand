@@ -32,9 +32,14 @@ const Dashboard = () => {
         <div className="border-b border-red-800/30 bg-black/80 backdrop-blur-md sticky top-0 z-20">
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center space-x-6">
-              <h1 className="text-xl font-bold text-red-300 tracking-wider glitch-text">
-                STANLEY COMMAND CENTER
-              </h1>
+              <div className="flex flex-col">
+                <h1 className="text-xl font-bold text-red-300 tracking-wider glitch-text">
+                  INSTACOMMAND
+                </h1>
+                <p className="text-xs text-red-500/70 tracking-wide">
+                  Powered by EnigmaOS and Stanley • From Enigma Releasing
+                </p>
+              </div>
               <LiveStatsStrip />
             </div>
             <SystemStatus />
