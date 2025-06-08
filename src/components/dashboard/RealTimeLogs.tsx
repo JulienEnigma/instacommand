@@ -13,6 +13,7 @@ interface LogEntry {
   outcome: 'success' | 'warning' | 'error';
   probability?: number;
   followbackChance?: number;
+  stanleyComment?: string;
 }
 
 export const RealTimeLogs = () => {
@@ -21,22 +22,42 @@ export const RealTimeLogs = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const logTemplates = [
-    { action: 'Followed', target: '@julien_film', details: 'Urban photographer - high compatibility', type: 'follow' as const, outcome: 'success' as const, probability: 82, followbackChance: 82 },
-    { action: 'Followed', target: '@alice.k', details: 'Film community member', type: 'follow' as const, outcome: 'success' as const, probability: 67, followbackChance: 67 },
-    { action: 'Followed', target: '@urban_lens', details: 'Street photography specialist', type: 'follow' as const, outcome: 'success' as const, probability: 91, followbackChance: 91 },
-    { action: 'Followed', target: '@photo_maven', details: 'Mutual connections: 3', type: 'follow' as const, outcome: 'success' as const, probability: 94, followbackChance: 94 },
-    { action: 'Viewed story', target: '@alice.k', details: 'Story engagement logged', type: 'story' as const, outcome: 'success' as const },
-    { action: 'Engagement logged', target: '@filmfest.mythos', details: 'Added to high-value targets', type: 'engage' as const, outcome: 'success' as const },
-    { action: 'DM sent', target: '@urban_lens', details: 'Message: "Amazing street work!" delivered', type: 'dm' as const, outcome: 'success' as const },
-    { action: 'Hashtag scan', target: '#streetphotography', details: '12 new targets identified', type: 'scan' as const, outcome: 'success' as const },
-    { action: 'Target analysis', target: '@creative_souls', details: 'Compatibility: 89% - queued', type: 'scan' as const, outcome: 'success' as const },
-    { action: 'Post liked', target: '@creative_souls', details: 'Urban landscape series', type: 'engage' as const, outcome: 'success' as const },
-    { action: 'Story batch', target: '@city_explorer', details: 'Viewed 3/5 stories in sequence', type: 'story' as const, outcome: 'success' as const },
-    { action: 'Follow attempt', target: '@private_account', details: 'Account private - follow pending', type: 'follow' as const, outcome: 'warning' as const, followbackChance: 45 },
-    { action: 'DM failed', target: '@restricted_user', details: 'DMs not allowed - user settings', type: 'dm' as const, outcome: 'error' as const },
-    { action: '[Stanley] Strategy shift', target: '', details: 'Engagement down 12%. Switching to alternate pool.', type: 'stanley' as const, outcome: 'success' as const },
-    { action: '[Stanley] Analysis', target: '', details: 'Follow-back rate: 73% (above target)', type: 'stanley' as const, outcome: 'success' as const },
-    { action: '[SYS] Reflex update', target: '', details: 'Neural pathways optimized - v2.1.4', type: 'system' as const, outcome: 'success' as const },
+    { 
+      action: 'Followed', 
+      target: '@julien_film', 
+      details: 'Urban photographer - high compatibility', 
+      type: 'follow' as const, 
+      outcome: 'success' as const, 
+      probability: 82, 
+      followbackChance: 82,
+      stanleyComment: 'Strong mutual interest signals detected'
+    },
+    { 
+      action: 'Followed', 
+      target: '@alice.k', 
+      details: 'Film community member', 
+      type: 'follow' as const, 
+      outcome: 'success' as const, 
+      probability: 67, 
+      followbackChance: 67,
+      stanleyComment: 'User responded via Story View, possible follow-back'
+    },
+    { 
+      action: 'Viewed story', 
+      target: '@urban_lens', 
+      details: 'Story engagement logged', 
+      type: 'story' as const, 
+      outcome: 'success' as const,
+      stanleyComment: 'High engagement timing - optimal window'
+    },
+    { 
+      action: 'DM sent', 
+      target: '@creative_souls', 
+      details: 'Message delivered successfully', 
+      type: 'dm' as const, 
+      outcome: 'success' as const,
+      stanleyComment: 'Response probability elevated based on recent activity'
+    }
   ];
 
   useEffect(() => {
@@ -183,20 +204,27 @@ export const RealTimeLogs = () => {
         <ScrollArea className="h-full">
           <div ref={scrollRef} className="space-y-1 font-mono text-sm">
             {filteredLogs.map((log, index) => (
-              <div key={index} className="flex items-start space-x-3 py-1 animate-fade-in">
-                <span className="text-red-500/70 text-xs w-20 flex-shrink-0 font-mono">
-                  [{log.timestamp}]
-                </span>
-                <span className="text-xs flex-shrink-0">{getOutcomeIcon(log.outcome)}</span>
-                <div className="flex-1 min-w-0">
-                  <span className={getLogColor(log.type)}>
-                    {log.action} {log.target && <span className="text-red-300 font-bold">{log.target}</span>}
-                    {log.type === 'follow' && getFollowbackDisplay(log.followbackChance)}
+              <div key={index} className="flex flex-col space-y-1 py-1 animate-fade-in">
+                <div className="flex items-start space-x-3">
+                  <span className="text-red-500/70 text-xs w-20 flex-shrink-0 font-mono">
+                    [{log.timestamp}]
                   </span>
-                  <div className="text-red-400/70 text-xs mt-1 break-words">
-                    {log.details}
+                  <span className="text-xs flex-shrink-0">{getOutcomeIcon(log.outcome)}</span>
+                  <div className="flex-1 min-w-0">
+                    <span className={getLogColor(log.type)}>
+                      {log.action} {log.target && <span className="text-red-300 font-bold">{log.target}</span>}
+                      {log.type === 'follow' && getFollowbackDisplay(log.followbackChance)}
+                    </span>
+                    <div className="text-red-400/70 text-xs mt-1 break-words">
+                      {log.details}
+                    </div>
                   </div>
                 </div>
+                {log.stanleyComment && (
+                  <div className="ml-24 text-purple-400/80 text-xs italic">
+                    [Stanley] {log.stanleyComment}
+                  </div>
+                )}
               </div>
             ))}
           </div>
