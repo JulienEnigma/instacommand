@@ -43,28 +43,38 @@ const Dashboard = () => {
         {/* Scrollable content area */}
         <ScrollArea className="h-[calc(100vh-80px)]">
           <div className="p-6">
-            {/* Enhanced responsive grid layout with Instagram Mirror */}
-            <div className="grid grid-cols-1 xl:grid-cols-16 gap-6">
-              {/* Left Column - Mission Controls & Stanley (3 cols on xl, full on smaller) */}
-              <div className="xl:col-span-4 space-y-6">
+            {/* Simple responsive grid layout - 3 tiles per row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Row 1 */}
+              <div className="h-80">
                 <MissionControls />
+              </div>
+              <div className="h-80">
+                <CampaignMode />
+              </div>
+              <div className="h-80">
+                <InstagramMirror />
+              </div>
+
+              {/* Row 2 */}
+              <div className="h-80">
                 <StanleyInterface />
+              </div>
+              <div className="h-80">
+                <RealTimeLogs />
+              </div>
+              <div className="h-80">
+                <CommandInterface />
+              </div>
+
+              {/* Row 3 */}
+              <div className="h-80">
                 <ReflexNode />
               </div>
-
-              {/* Center Column - Campaign & Logs (6 cols on xl, full on smaller) */}
-              <div className="xl:col-span-8 space-y-6">
-                <CampaignMode />
-                <div className="h-96">
-                  <RealTimeLogs />
-                </div>
-              </div>
-
-              {/* Right Column - Instagram Mirror & Tools (4 cols on xl, full on smaller) */}
-              <div className="xl:col-span-4 space-y-6">
-                <InstagramMirror />
-                <CommandInterface />
+              <div className="h-80">
                 <TacticalRadar />
+              </div>
+              <div className="h-80">
                 <TargetIntelligence />
               </div>
             </div>
