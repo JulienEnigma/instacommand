@@ -58,7 +58,7 @@ export const CommandInterface = () => {
         success: response.success
       };
 
-      setCommandHistory(prev => [...prev, newCommand]);
+      setCommandHistory(prev => [...prev, newCommand].slice(-20)); // Keep last 20 commands
       setCommandInput('');
       setIsExecuting(false);
       
@@ -81,7 +81,7 @@ export const CommandInterface = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <Card className="bg-black/60 border-red-800/30 text-red-400 backdrop-blur-md shadow-lg shadow-red-500/20">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg font-bold tracking-wider flex items-center">
@@ -121,14 +121,14 @@ export const CommandInterface = () => {
           
           <div>
             <div className="text-xs text-red-500/70 mb-2 tracking-wider">QUICK COMMANDS:</div>
-            <div className="grid grid-cols-1 gap-1">
+            <div className="grid grid-cols-1 gap-1 max-h-32 overflow-y-auto">
               {quickCommands.map((cmd, index) => (
                 <Button
                   key={index}
                   variant="outline"
                   size="sm"
                   onClick={() => setCommandInput(cmd)}
-                  className="justify-start text-xs bg-black/60 border-red-800/30 text-red-400 hover:bg-red-900/30 hover:border-red-600 font-mono transition-all duration-200"
+                  className="justify-start text-xs bg-black/60 border-red-800/30 text-red-400 hover:bg-red-900/30 hover:border-red-600 font-mono transition-all duration-200 break-words text-left"
                 >
                   {'>'} {cmd}
                 </Button>
@@ -143,15 +143,15 @@ export const CommandInterface = () => {
           <CardTitle className="text-sm font-bold tracking-wider">COMMAND HISTORY</CardTitle>
         </CardHeader>
         <CardContent>
-          <ScrollArea className="h-64">
+          <ScrollArea className="h-48">
             <div className="space-y-3 font-mono text-xs">
-              {commandHistory.map((cmd, index) => (
+              {commandHistory.slice().reverse().map((cmd, index) => (
                 <div key={index} className="border-l-2 border-red-800/50 pl-3 animate-fade-in">
-                  <div className="text-gray-500">[{cmd.timestamp}]</div>
-                  <div className="text-red-300">
+                  <div className="text-red-500/70">[{cmd.timestamp}]</div>
+                  <div className="text-red-300 break-words">
                     {'>'} {cmd.input}
                   </div>
-                  <div className={`mt-1 ${cmd.success ? 'text-gray-400' : 'text-red-500'}`}>
+                  <div className={`mt-1 break-words ${cmd.success ? 'text-red-400/70' : 'text-red-500'}`}>
                     {cmd.output}
                   </div>
                 </div>

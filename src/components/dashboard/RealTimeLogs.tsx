@@ -73,7 +73,7 @@ export const RealTimeLogs = () => {
   };
 
   return (
-    <Card className="bg-gray-900 border-green-800 text-green-400 h-full">
+    <Card className="bg-black/60 border-red-800/30 text-red-400 backdrop-blur-md shadow-lg shadow-red-500/20 h-full">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-bold tracking-wider flex items-center">
           <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-3"></span>
@@ -84,15 +84,15 @@ export const RealTimeLogs = () => {
         <ScrollArea className="h-full">
           <div ref={scrollRef} className="space-y-1 font-mono text-sm">
             {logs.map((log, index) => (
-              <div key={index} className="flex items-start space-x-3 py-1">
-                <span className="text-gray-500 text-xs w-20 flex-shrink-0">
+              <div key={index} className="flex items-start space-x-3 py-1 animate-fade-in">
+                <span className="text-red-500/70 text-xs w-20 flex-shrink-0">
                   [{log.timestamp}]
                 </span>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <span className={getLogColor(log.type)}>
-                    {log.action} {log.target && <span className="text-white font-bold">{log.target}</span>}
+                    {log.action} {log.target && <span className="text-red-300 font-bold">{log.target}</span>}
                   </span>
-                  <div className="text-gray-400 text-xs mt-1 ml-4">
+                  <div className="text-red-400/70 text-xs mt-1 ml-4 break-words">
                     {log.details}
                   </div>
                 </div>

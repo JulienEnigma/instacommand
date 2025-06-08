@@ -18,16 +18,16 @@ import { StanleyInterface } from "@/components/dashboard/StanleyInterface";
 
 const Dashboard = () => {
   return (
-    <div className="min-h-screen bg-black text-red-400 font-mono overflow-hidden">
+    <div className="min-h-screen bg-black text-red-400 font-mono">
       {/* Animated background with red grid */}
       <div className="fixed inset-0 bg-gradient-to-br from-black via-red-950/10 to-black">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,0,0,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,0,0,0.03)_1px,transparent_1px)] bg-[size:50px_50px] animate-pulse"></div>
       </div>
       
-      {/* Glassmorphism overlay */}
-      <div className="relative z-10">
+      {/* Main content with proper scrolling */}
+      <div className="relative z-10 min-h-screen">
         {/* Header with Live Stats and System Status */}
-        <div className="border-b border-red-800/30 bg-black/80 backdrop-blur-md">
+        <div className="border-b border-red-800/30 bg-black/80 backdrop-blur-md sticky top-0 z-20">
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center space-x-6">
               <h1 className="text-xl font-bold text-red-300 tracking-wider glitch-text">
@@ -39,27 +39,35 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="p-6 grid grid-cols-12 gap-6 h-[calc(100vh-80px)]">
-          {/* Left Column - Mission Controls & Stanley */}
-          <div className="col-span-3 space-y-6">
-            <MissionControls />
-            <StanleyInterface />
-            <ReflexNode />
-          </div>
+        {/* Scrollable content area */}
+        <ScrollArea className="h-[calc(100vh-80px)]">
+          <div className="p-6">
+            {/* Responsive grid layout */}
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+              {/* Left Column - Mission Controls & Stanley (3 cols on xl, full on smaller) */}
+              <div className="xl:col-span-3 space-y-6">
+                <MissionControls />
+                <StanleyInterface />
+                <ReflexNode />
+              </div>
 
-          {/* Center Column - Real-Time Logs & Campaign */}
-          <div className="col-span-6 space-y-6">
-            <CampaignMode />
-            <RealTimeLogs />
-          </div>
+              {/* Center Column - Campaign & Logs (6 cols on xl, full on smaller) */}
+              <div className="xl:col-span-6 space-y-6">
+                <CampaignMode />
+                <div className="h-96">
+                  <RealTimeLogs />
+                </div>
+              </div>
 
-          {/* Right Column - Command Interface & Tactical */}
-          <div className="col-span-3 space-y-6">
-            <CommandInterface />
-            <TacticalRadar />
-            <TargetIntelligence />
+              {/* Right Column - Command & Tactical (3 cols on xl, full on smaller) */}
+              <div className="xl:col-span-3 space-y-6">
+                <CommandInterface />
+                <TacticalRadar />
+                <TargetIntelligence />
+              </div>
+            </div>
           </div>
-        </div>
+        </ScrollArea>
       </div>
     </div>
   );
