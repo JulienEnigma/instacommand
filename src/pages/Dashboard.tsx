@@ -16,6 +16,7 @@ import { CampaignMode } from "@/components/dashboard/CampaignMode";
 import { ReflexNode } from "@/components/dashboard/ReflexNode";
 import { StanleyInterface } from "@/components/dashboard/StanleyInterface";
 import { InstagramMirror } from "@/components/dashboard/InstagramMirror";
+import { SystemOptimization } from "@/components/dashboard/SystemOptimization";
 
 const Dashboard = () => {
   return (
@@ -43,7 +44,7 @@ const Dashboard = () => {
         {/* Scrollable content area */}
         <ScrollArea className="h-[calc(100vh-80px)]">
           <div className="p-6">
-            {/* Simple responsive grid layout - 3 tiles per row */}
+            {/* Enhanced responsive grid layout - 3 tiles per row */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Row 1 */}
               <div className="h-80">
@@ -74,6 +75,11 @@ const Dashboard = () => {
               <div className="h-80">
                 <TacticalRadar />
               </div>
+              <div className="h-80">
+                <SystemOptimization />
+              </div>
+
+              {/* Row 4 */}
               <div className="h-80">
                 <TargetIntelligence />
               </div>

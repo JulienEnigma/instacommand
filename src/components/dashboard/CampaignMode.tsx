@@ -4,13 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Timer, Target, Trophy, Crosshair, Archive, RotateCcw } from 'lucide-react';
+import { Timer, Target, Trophy, Crosshair, Archive, RotateCcw, Play, Pause, Copy } from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
 
 interface Campaign {
   id: string;
   name: string;
   codename: string;
-  status: 'active' | 'completed' | 'scheduled' | 'failed' | 'archived';
+  status: 'active' | 'completed' | 'scheduled' | 'failed' | 'archived' | 'paused';
   progress: number;
   timeRemaining: string;
   target: number;
@@ -21,6 +22,7 @@ interface Campaign {
 }
 
 export const CampaignMode = () => {
+  const { toast } = useToast();
   const [campaigns, setCampaigns] = useState<Campaign[]>([
     {
       id: '1',
@@ -107,6 +109,7 @@ export const CampaignMode = () => {
       case 'scheduled': return 'bg-yellow-600';
       case 'failed': return 'bg-gray-600';
       case 'archived': return 'bg-blue-600/50';
+      case 'paused': return 'bg-orange-600';
       default: return 'bg-gray-600';
     }
   };
@@ -115,6 +118,38 @@ export const CampaignMode = () => {
     setCampaigns(prev => prev.map(campaign => 
       campaign.id === id ? { ...campaign, status: 'archived' as const } : campaign
     ));
+    toast({
+      title: "Campaign Archived",
+      description: "Campaign moved to archive successfully.",
+    });
+  };
+
+  const pauseCampaign = (id: string) => {
+    setCampaigns(prev => prev.map(campaign => 
+      campaign.id === id ? { 
+        ...campaign, 
+        status: campaign.status === 'paused' ? 'active' : 'paused' 
+      } : campaign
+    ));
+  };
+
+  const duplicateCampaign = (campaign: Campaign) => {
+    const newCampaign: Campaign = {
+      ...campaign,
+      id: Date.now().toString(),
+      name: `${campaign.name} (Copy)`,
+      codename: `${campaign.codename}_COPY`,
+      status: 'scheduled',
+      progress: 0,
+      current: 0,
+      completedAt: undefined,
+      verdict: undefined
+    };
+    setCampaigns(prev => [...prev, newCampaign]);
+    toast({
+      title: "Campaign Duplicated",
+      description: `Created copy of ${campaign.name}`,
+    });
   };
 
   const activeCampaigns = campaigns.filter(c => c.status !== 'archived');
@@ -195,7 +230,15 @@ export const CampaignMode = () => {
                 <div className="text-xs text-cyan-400 bg-black/40 p-2 rounded border border-cyan-800/30">
                   <span className="text-orange-400 font-bold">[Stanley]</span> {campaign.verdict}
                 </div>
-                {campaign.status !== 'archived' && (
+                <div className="flex space-x-2">
+                  <Button
+                    size="sm"
+                    onClick={() => duplicateCampaign(campaign)}
+                    className="bg-purple-600/30 text-purple-300 border-purple-600/50 hover:bg-purple-600/50 text-xs"
+                  >
+                    <Copy className="mr-1 h-3 w-3" />
+                    Duplicate
+                  </Button>
                   <Button
                     size="sm"
                     onClick={() => archiveCampaign(campaign.id)}
@@ -204,7 +247,33 @@ export const CampaignMode = () => {
                     <Archive className="mr-1 h-3 w-3" />
                     Archive
                   </Button>
-                )}
+                </div>
+              </div>
+            )}
+
+            {campaign.status === 'active' && (
+              <div className="mt-3 flex space-x-2">
+                <Button
+                  size="sm"
+                  onClick={() => pauseCampaign(campaign.id)}
+                  className="bg-orange-600/30 text-orange-300 border-orange-600/50 hover:bg-orange-600/50 text-xs"
+                >
+                  <Pause className="mr-1 h-3 w-3" />
+                  Pause
+                </Button>
+              </div>
+            )}
+
+            {campaign.status === 'paused' && (
+              <div className="mt-3 flex space-x-2">
+                <Button
+                  size="sm"
+                  onClick={() => pauseCampaign(campaign.id)}
+                  className="bg-green-600/30 text-green-300 border-green-600/50 hover:bg-green-600/50 text-xs"
+                >
+                  <Play className="mr-1 h-3 w-3" />
+                  Resume
+                </Button>
               </div>
             )}
           </div>
