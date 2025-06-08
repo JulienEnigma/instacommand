@@ -13,6 +13,7 @@ interface RadarBlip {
   label: string;
   timeActive: number; // minutes
   engagementLevel: number; // 0-100
+  lastAction: string;
 }
 
 export const TacticalRadar = () => {
@@ -25,7 +26,8 @@ export const TacticalRadar = () => {
       intensity: 0.9, 
       label: '@filmmaker_jane',
       timeActive: 45,
-      engagementLevel: 85
+      engagementLevel: 85,
+      lastAction: 'story viewed'
     },
     { 
       id: '2', 
@@ -35,7 +37,8 @@ export const TacticalRadar = () => {
       intensity: 0.7, 
       label: '@photo_mike',
       timeActive: 12,
-      engagementLevel: 60
+      engagementLevel: 60,
+      lastAction: 'followed back'
     },
     { 
       id: '3', 
@@ -45,7 +48,8 @@ export const TacticalRadar = () => {
       intensity: 0.8, 
       label: '@visual_artist',
       timeActive: 120,
-      engagementLevel: 75
+      engagementLevel: 75,
+      lastAction: 'DM sent'
     },
     { 
       id: '4', 
@@ -55,12 +59,14 @@ export const TacticalRadar = () => {
       intensity: 0.3, 
       label: '@urban_explorer',
       timeActive: 5,
-      engagementLevel: 20
+      engagementLevel: 20,
+      lastAction: 'unfollowed'
     }
   ]);
 
   const [sweepAngle, setSweepAngle] = useState(0);
   const [selectedBlip, setSelectedBlip] = useState<RadarBlip | null>(null);
+  const [hoveredBlip, setHoveredBlip] = useState<RadarBlip | null>(null);
 
   useEffect(() => {
     // Radar sweep animation
@@ -71,6 +77,7 @@ export const TacticalRadar = () => {
     // Update blip positions and add new ones
     const blipInterval = setInterval(() => {
       const types: RadarBlip['type'][] = ['new_follower', 'high_value', 'active_target'];
+      const actions = ['followed', 'DM sent', 'story viewed', 'post liked', 'comment left'];
       const newBlip: RadarBlip = {
         id: Date.now().toString(),
         x: Math.random() * 90 + 5,
@@ -79,7 +86,8 @@ export const TacticalRadar = () => {
         intensity: Math.random() * 0.5 + 0.5,
         label: `@target_${Math.floor(Math.random() * 1000)}`,
         timeActive: Math.floor(Math.random() * 180),
-        engagementLevel: Math.floor(Math.random() * 100)
+        engagementLevel: Math.floor(Math.random() * 100),
+        lastAction: actions[Math.floor(Math.random() * actions.length)]
       };
 
       setBlips(prev => [...prev.slice(-8), newBlip]);
@@ -112,7 +120,7 @@ export const TacticalRadar = () => {
   };
 
   return (
-    <Card className="bg-black/60 border-red-800/30 text-red-400 backdrop-blur-md shadow-lg shadow-red-500/20">
+    <Card className="bg-black/60 border-red-800/30 text-red-400 backdrop-blur-md shadow-lg shadow-red-500/20 h-full">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-bold tracking-wider flex items-center justify-between">
           <div className="flex items-center">
@@ -148,18 +156,18 @@ export const TacticalRadar = () => {
             <div className="absolute h-full w-px bg-red-800/20 left-1/2 transform -translate-x-1/2" />
           </div>
 
-          {/* Axes labels */}
-          <div className="absolute top-2 left-1/2 transform -translate-x-1/2 text-xs text-gray-500">
-            High Engagement
+          {/* Clear axis labels */}
+          <div className="absolute top-1 left-1/2 transform -translate-x-1/2 text-xs text-green-400 font-bold">
+            HIGH ENGAGEMENT
           </div>
-          <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 text-xs text-gray-500">
-            Low Engagement
+          <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 text-xs text-red-400 font-bold">
+            LOW ENGAGEMENT
           </div>
-          <div className="absolute left-2 top-1/2 transform -translate-y-1/2 rotate-90 text-xs text-gray-500">
-            Recent
+          <div className="absolute left-1 top-1/2 transform -translate-y-1/2 rotate-90 text-xs text-blue-400 font-bold">
+            RECENT
           </div>
-          <div className="absolute right-2 top-1/2 transform -translate-y-1/2 -rotate-90 text-xs text-gray-500">
-            Older
+          <div className="absolute right-1 top-1/2 transform -translate-y-1/2 -rotate-90 text-xs text-yellow-400 font-bold">
+            OLDER
           </div>
 
           {/* Radar sweep */}
@@ -171,7 +179,7 @@ export const TacticalRadar = () => {
             }}
           />
 
-          {/* Blips */}
+          {/* Blips with tooltips */}
           {blips.map((blip) => (
             <div
               key={blip.id}
@@ -183,9 +191,26 @@ export const TacticalRadar = () => {
                 opacity: blip.intensity
               }}
               onClick={() => setSelectedBlip(blip)}
-              title={`${blip.label} - ${getTypeDescription(blip.type)}`}
+              onMouseEnter={() => setHoveredBlip(blip)}
+              onMouseLeave={() => setHoveredBlip(null)}
             />
           ))}
+
+          {/* Hover tooltip */}
+          {hoveredBlip && (
+            <div 
+              className="absolute bg-black/90 border border-red-800/50 rounded p-2 text-xs z-10 pointer-events-none"
+              style={{
+                left: `${hoveredBlip.x}%`,
+                top: `${Math.max(10, hoveredBlip.y - 15)}%`,
+                transform: 'translateX(-50%)'
+              }}
+            >
+              <div className="font-bold text-red-300">{hoveredBlip.label}</div>
+              <div className="text-gray-400">Last: {hoveredBlip.lastAction}</div>
+              <div className="text-yellow-400">Engagement: {hoveredBlip.engagementLevel}%</div>
+            </div>
+          )}
 
           {/* Center dot */}
           <div className="absolute w-1 h-1 bg-red-500 rounded-full top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
@@ -205,6 +230,7 @@ export const TacticalRadar = () => {
             </div>
             <div className="text-xs space-y-1">
               <div>Status: {getTypeDescription(selectedBlip.type)}</div>
+              <div>Last Action: {selectedBlip.lastAction}</div>
               <div>Active for: {selectedBlip.timeActive}m</div>
               <div>Engagement Level: {selectedBlip.engagementLevel}%</div>
             </div>
@@ -233,7 +259,7 @@ export const TacticalRadar = () => {
 
         <div className="mt-3 text-xs text-gray-500 flex items-center">
           <Info className="h-3 w-3 mr-1" />
-          X-axis: Time active, Y-axis: Engagement level
+          Hover blips for details. X-axis: Time active, Y-axis: Engagement level
         </div>
       </CardContent>
     </Card>
