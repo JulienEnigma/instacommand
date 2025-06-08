@@ -49,43 +49,50 @@ const Dashboard = () => {
         {/* Scrollable content area */}
         <ScrollArea className="h-[calc(100vh-80px)]">
           <div className="p-6">
-            {/* Enhanced responsive grid layout - 3 tiles per row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Enhanced responsive grid layout with proper spacing */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-auto">
               {/* Row 1 */}
-              <div className="h-80">
+              <div className="min-h-[320px] max-h-[400px] overflow-hidden">
                 <MissionControls />
               </div>
-              <div className="h-80">
+              <div className="min-h-[320px] max-h-[400px] overflow-hidden">
                 <CampaignMode />
               </div>
-              <div className="h-80">
+              <div className="min-h-[200px] max-h-[400px] overflow-hidden transition-all duration-300">
                 <InstagramMirror />
               </div>
-
-              {/* Row 2 */}
-              <div className="h-80">
+              <div className="min-h-[320px] max-h-[400px] overflow-hidden xl:block hidden">
                 <StanleyInterface />
               </div>
-              <div className="h-80">
+
+              {/* Section Divider */}
+              <div className="col-span-full border-t border-red-800/20 pt-4 mt-4"></div>
+
+              {/* Row 2 */}
+              <div className="min-h-[320px] max-h-[400px] overflow-hidden xl:hidden">
+                <StanleyInterface />
+              </div>
+              <div className="min-h-[320px] max-h-[400px] overflow-hidden">
                 <RealTimeLogs />
               </div>
-              <div className="h-80">
+              <div className="min-h-[320px] max-h-[400px] overflow-hidden">
+                <SystemOptimization />
+              </div>
+              <div className="min-h-[320px] max-h-[400px] overflow-hidden">
                 <CommandInterface />
               </div>
 
+              {/* Section Divider */}
+              <div className="col-span-full border-t border-red-800/20 pt-4 mt-4"></div>
+
               {/* Row 3 */}
-              <div className="h-80">
+              <div className="min-h-[320px] max-h-[400px] overflow-hidden">
                 <ReflexNode />
               </div>
-              <div className="h-80">
+              <div className="min-h-[320px] max-h-[500px] overflow-hidden lg:col-span-2 xl:col-span-2">
                 <TacticalRadar />
               </div>
-              <div className="h-80">
-                <SystemOptimization />
-              </div>
-
-              {/* Row 4 */}
-              <div className="h-80">
+              <div className="min-h-[320px] max-h-[400px] overflow-hidden">
                 <TargetIntelligence />
               </div>
             </div>

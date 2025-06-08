@@ -29,6 +29,44 @@ export const MissionControls = () => {
     }
   };
 
+  const controls = [
+    {
+      icon: Play,
+      label: 'START SWEEP',
+      action: 'start',
+      command: 'NEW SWEEP INITIATED',
+      color: 'bg-red-700 hover:bg-red-600 hover:shadow-red-500/30'
+    },
+    {
+      icon: Pause,
+      label: 'PAUSE OPS',
+      action: 'pause',
+      command: 'ALL OPS PAUSED',
+      color: 'bg-yellow-700 hover:bg-yellow-600 hover:shadow-yellow-500/30'
+    },
+    {
+      icon: Zap,
+      label: 'REFLEX UPDATE',
+      action: 'upgrade',
+      command: 'REFLEX UPGRADE FORCED',
+      color: 'bg-purple-700 hover:bg-purple-600 hover:shadow-purple-500/30'
+    },
+    {
+      icon: Trash2,
+      label: 'CLEAR LOGS',
+      action: 'clear',
+      command: 'LOGS CLEARED',
+      color: 'bg-orange-700 hover:bg-orange-600 hover:shadow-orange-500/30'
+    },
+    {
+      icon: Power,
+      label: 'TERMINATE',
+      action: 'terminate',
+      command: 'BROWSER SESSION TERMINATED',
+      color: 'bg-gray-700 hover:bg-gray-600 border border-red-800 hover:shadow-red-500/30'
+    }
+  ];
+
   return (
     <Card className="bg-black/60 border-red-800/30 text-red-400 backdrop-blur-md shadow-lg shadow-red-500/20 h-full">
       <CardHeader className="pb-3">
@@ -37,46 +75,26 @@ export const MissionControls = () => {
           MISSION CONTROLS
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <Button 
-          onClick={() => executeCommand('NEW SWEEP INITIATED', 'start')}
-          className="w-full bg-red-700 hover:bg-red-600 text-black font-bold transition-all duration-300 hover:shadow-lg hover:shadow-red-500/50"
-        >
-          <Play className="mr-2 h-4 w-4" />
-          START NEW SWEEP
-        </Button>
-        
-        <Button 
-          onClick={() => executeCommand('ALL OPS PAUSED', 'pause')}
-          className="w-full bg-yellow-700 hover:bg-yellow-600 text-black font-bold transition-all duration-300 hover:shadow-lg hover:shadow-yellow-500/50"
-        >
-          <Pause className="mr-2 h-4 w-4" />
-          PAUSE ALL OPS
-        </Button>
-        
-        <Button 
-          onClick={() => executeCommand('REFLEX UPGRADE FORCED', 'upgrade')}
-          className="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/50"
-        >
-          <Zap className="mr-2 h-4 w-4" />
-          FORCE REFLEX UPDATE
-        </Button>
-        
-        <Button 
-          onClick={() => executeCommand('LOGS CLEARED', 'clear')}
-          className="w-full bg-orange-700 hover:bg-orange-600 text-white font-bold transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/50"
-        >
-          <Trash2 className="mr-2 h-4 w-4" />
-          CLEAR LOGS
-        </Button>
-        
-        <Button 
-          onClick={() => executeCommand('BROWSER SESSION TERMINATED', 'terminate')}
-          className="w-full bg-gray-700 hover:bg-gray-600 text-red-400 font-bold border border-red-800 transition-all duration-300 hover:shadow-lg hover:shadow-red-500/50"
-        >
-          <Power className="mr-2 h-4 w-4" />
-          TERMINATE BROWSER SESSION
-        </Button>
+      <CardContent className="h-[calc(100%-80px)]">
+        {/* Horizontal tile grid layout */}
+        <div className="grid grid-cols-3 grid-rows-2 gap-3 h-full">
+          {controls.map((control, index) => (
+            <Button
+              key={index}
+              onClick={() => executeCommand(control.command, control.action)}
+              className={`
+                flex flex-col items-center justify-center p-2 h-full min-h-[60px]
+                text-black font-bold text-xs leading-tight
+                transition-all duration-300 hover:shadow-lg
+                ${control.color}
+                ${index === 4 ? 'col-span-3' : ''}
+              `}
+            >
+              <control.icon className="h-4 w-4 mb-1 flex-shrink-0" />
+              <span className="text-center break-words">{control.label}</span>
+            </Button>
+          ))}
+        </div>
       </CardContent>
     </Card>
   );
