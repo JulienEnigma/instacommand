@@ -94,7 +94,7 @@ export const CommandInterface = () => {
                   onClick={() => setCommandInput(cmd)}
                   className="justify-start text-xs bg-black border-green-800 text-green-400 hover:bg-green-800 font-mono"
                 >
-                  > {cmd}
+                  {'>'} {cmd}
                 </Button>
               ))}
             </div>
@@ -113,7 +113,7 @@ export const CommandInterface = () => {
                 <div key={index} className="border-l-2 border-green-800 pl-3">
                   <div className="text-gray-500">[{cmd.timestamp}]</div>
                   <div className="text-green-300">
-                    > {cmd.input}
+                    {'>'} {cmd.input}
                   </div>
                   <div className="text-gray-400 mt-1">
                     {cmd.output}
