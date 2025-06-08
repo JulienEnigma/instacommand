@@ -3,14 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Brain, TrendingUp, AlertCircle, Target } from 'lucide-react';
 import { ScrollArea } from "@/components/ui/scroll-area";
+import api, { StanleyMessage } from '@/lib/api';
 
-interface StanleyMessage {
-  type: 'analysis' | 'alert' | 'recommendation' | 'status';
-  message: string;
-  timestamp: string;
-  priority: 'low' | 'medium' | 'high';
-  data?: string;
-}
+
 
 export const StanleyInterface = () => {
   const [messages, setMessages] = useState<StanleyMessage[]>([
@@ -70,16 +65,49 @@ export const StanleyInterface = () => {
   ];
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      const insight = stanleyInsights[Math.floor(Math.random() * stanleyInsights.length)];
-      const newMessage: StanleyMessage = {
-        ...insight,
-        timestamp: new Date().toLocaleTimeString('en-US', { hour12: false })
-      };
+    const loadInitialInsights = async () => {
+      try {
+        const context = { 
+          timestamp: new Date().toISOString(),
+          system_status: 'initializing'
+        };
+        const insight = await api.stanleyInsight(context);
+        setMessages(prev => [...prev, insight]);
+      } catch (error) {
+        console.error('Failed to load Stanley insights:', error);
+        const mockMessage: StanleyMessage = {
+          type: 'alert',
+          message: 'Backend connection failed - using offline mode',
+          timestamp: new Date().toLocaleTimeString('en-US', { hour12: false }),
+          priority: 'high',
+          data: { error: 'Connection timeout' }
+        };
+        setMessages(prev => [...prev, mockMessage]);
+      }
+    };
 
-      setMessages(prev => [...prev.slice(-4), newMessage]);
+    const interval = setInterval(async () => {
+      try {
+        const context = {
+          timestamp: new Date().toISOString(),
+          message_count: messages.length,
+          last_activity: messages[messages.length - 1]?.timestamp
+        };
+        
+        const insight = await api.stanleyInsight(context);
+        setMessages(prev => [...prev.slice(-4), insight]);
+      } catch (error) {
+        console.error('Failed to get Stanley insight:', error);
+        const insight = stanleyInsights[Math.floor(Math.random() * stanleyInsights.length)];
+        const newMessage: StanleyMessage = {
+          ...insight,
+          timestamp: new Date().toLocaleTimeString('en-US', { hour12: false })
+        };
+        setMessages(prev => [...prev.slice(-4), newMessage]);
+      }
     }, Math.random() * 8000 + 5000);
 
+    loadInitialInsights();
     return () => clearInterval(interval);
   }, []);
 

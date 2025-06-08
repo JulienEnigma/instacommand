@@ -3,13 +3,9 @@ import { toast } from "sonner";
 import { StanleySuggestions } from './command/StanleySuggestions';
 import { CommandInput } from './command/CommandInput';
 import { CommandHistory } from './command/CommandHistory';
+import api, { Command } from '@/lib/api';
 
-interface Command {
-  input: string;
-  output: string;
-  timestamp: string;
-  success: boolean;
-}
+
 
 interface StanleySuggestion {
   text: string;
@@ -111,30 +107,43 @@ export const CommandInterface = () => {
     setShowAutocomplete(value.length > 0 && getCommandSuggestions(value).length > 0);
   };
 
-  const executeCommand = () => {
+  const executeCommand = async () => {
     if (!commandInput.trim()) return;
 
     setIsExecuting(true);
     setShowAutocomplete(false);
     
-    setTimeout(() => {
-      const mockResponses = [
-        { text: `Executing: ${commandInput}`, success: true },
-        { text: `Target ${commandInput} added to queue`, success: true },
-        { text: `Scan completed for ${commandInput} - 15 new targets`, success: true },
-        { text: `Operation ${commandInput} initiated`, success: true },
-        { text: `Analysis complete for ${commandInput}`, success: true },
-        { text: `Command ${commandInput} processed successfully`, success: true },
-        { text: `Error: Access denied for ${commandInput}`, success: false }
-      ];
-
-      const response = mockResponses[Math.floor(Math.random() * mockResponses.length)];
+    try {
+      let response;
+      let success = true;
+      
+      const cmd = commandInput.toLowerCase().trim();
+      
+      if (cmd.startsWith('scan #') || cmd.startsWith('scan @')) {
+        const hashtag = cmd.replace('scan #', '').replace('scan @', '');
+        response = await api.scanHashtag(hashtag);
+      } else if (cmd.startsWith('follow @')) {
+        const username = cmd.replace('follow @', '');
+        response = await api.followUser(username);
+      } else if (cmd === 'pause ops') {
+        response = await api.pauseOperations();
+      } else if (cmd === 'resume ops') {
+        response = await api.resumeOperations();
+      } else if (cmd === 'status all') {
+        response = await api.getSystemStatus();
+      } else if (cmd.startsWith('stanley')) {
+        const context = { command: commandInput, timestamp: new Date().toISOString() };
+        response = await api.stanleyInsight(context);
+      } else {
+        const llmResponse = await api.generateText(`Command: ${commandInput}. Provide a brief system response.`, 50);
+        response = { message: llmResponse.response || 'Command processed' };
+      }
       
       const newCommand: Command = {
         input: commandInput,
-        output: response.text,
+        output: response.message || response.success ? 'Command executed successfully' : 'Command failed',
         timestamp: new Date().toLocaleTimeString('en-US', { hour12: false }),
-        success: response.success
+        success: response.success !== false
       };
 
       setCommandHistory(prev => [...prev, newCommand].slice(-20));
@@ -142,12 +151,29 @@ export const CommandInterface = () => {
       setIsExecuting(false);
       setHistoryIndex(-1);
       
-      if (response.success) {
+      if (newCommand.success) {
         toast.success(`Command executed: ${commandInput}`);
       } else {
         toast.error(`Command failed: ${commandInput}`);
       }
-    }, 1000 + Math.random() * 2000);
+      
+    } catch (error) {
+      console.error('Command execution error:', error);
+      
+      const newCommand: Command = {
+        input: commandInput,
+        output: `Error: ${error instanceof Error ? error.message : 'Backend connection failed'}`,
+        timestamp: new Date().toLocaleTimeString('en-US', { hour12: false }),
+        success: false
+      };
+
+      setCommandHistory(prev => [...prev, newCommand].slice(-20));
+      setCommandInput('');
+      setIsExecuting(false);
+      setHistoryIndex(-1);
+      
+      toast.error(`Command failed: ${commandInput}`);
+    }
   };
 
   const executeSuggestion = (suggestion: string) => {

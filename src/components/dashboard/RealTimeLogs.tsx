@@ -3,62 +3,65 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Download, Activity } from 'lucide-react';
+import api, { LogEntry } from '@/lib/api';
 
-interface LogEntry {
-  timestamp: string;
-  action: string;
-  target?: string;
-  details: string;
-  type: 'follow' | 'story' | 'dm' | 'engage' | 'scan' | 'system' | 'stanley';
-  outcome: 'success' | 'warning' | 'error';
-  probability?: number;
-  followbackChance?: number;
-}
+
 
 export const RealTimeLogs = () => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [filter, setFilter] = useState<'all' | 'follow' | 'dm' | 'error' | 'stanley'>('all');
+  const [isConnected, setIsConnected] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  const logTemplates = [
-    { action: 'Followed', target: '@julien_film', details: 'Urban photographer - high compatibility', type: 'follow' as const, outcome: 'success' as const, probability: 82, followbackChance: 82 },
-    { action: 'Followed', target: '@alice.k', details: 'Film community member', type: 'follow' as const, outcome: 'success' as const, probability: 67, followbackChance: 67 },
-    { action: 'Followed', target: '@urban_lens', details: 'Street photography specialist', type: 'follow' as const, outcome: 'success' as const, probability: 91, followbackChance: 91 },
-    { action: 'Followed', target: '@photo_maven', details: 'Mutual connections: 3', type: 'follow' as const, outcome: 'success' as const, probability: 94, followbackChance: 94 },
-    { action: 'Viewed story', target: '@alice.k', details: 'Story engagement logged', type: 'story' as const, outcome: 'success' as const },
-    { action: 'Engagement logged', target: '@filmfest.mythos', details: 'Added to high-value targets', type: 'engage' as const, outcome: 'success' as const },
-    { action: 'DM sent', target: '@urban_lens', details: 'Message: "Amazing street work!" delivered', type: 'dm' as const, outcome: 'success' as const },
-    { action: 'Hashtag scan', target: '#streetphotography', details: '12 new targets identified', type: 'scan' as const, outcome: 'success' as const },
-    { action: 'Target analysis', target: '@creative_souls', details: 'Compatibility: 89% - queued', type: 'scan' as const, outcome: 'success' as const },
-    { action: 'Post liked', target: '@creative_souls', details: 'Urban landscape series', type: 'engage' as const, outcome: 'success' as const },
-    { action: 'Story batch', target: '@city_explorer', details: 'Viewed 3/5 stories in sequence', type: 'story' as const, outcome: 'success' as const },
-    { action: 'Follow attempt', target: '@private_account', details: 'Account private - follow pending', type: 'follow' as const, outcome: 'warning' as const, followbackChance: 45 },
-    { action: 'DM failed', target: '@restricted_user', details: 'DMs not allowed - user settings', type: 'dm' as const, outcome: 'error' as const },
-    { action: '[Stanley] Strategy shift', target: '', details: 'Engagement down 12%. Switching to alternate pool.', type: 'stanley' as const, outcome: 'success' as const },
-    { action: '[Stanley] Analysis', target: '', details: 'Follow-back rate: 73% (above target)', type: 'stanley' as const, outcome: 'success' as const },
-    { action: '[SYS] Reflex update', target: '', details: 'Neural pathways optimized - v2.1.4', type: 'system' as const, outcome: 'success' as const },
-  ];
+  const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
-    // Add initial logs
-    const initialLogs = logTemplates.slice(0, 8).map((template, index) => ({
-      timestamp: new Date(Date.now() - (8 - index) * 60000).toLocaleTimeString('en-US', { hour12: false }),
-      ...template
-    }));
-    setLogs(initialLogs);
+    const loadInitialLogs = async () => {
+      try {
+        const initialLogs = await api.getLogs(50);
+        setLogs(initialLogs);
+      } catch (error) {
+        console.error('Failed to load initial logs:', error);
+        const mockLogs: LogEntry[] = [
+          { timestamp: new Date().toLocaleTimeString('en-US', { hour12: false }), action: 'System', details: 'Backend connection failed - using mock data', type: 'system', outcome: 'warning' }
+        ];
+        setLogs(mockLogs);
+      }
+    };
 
-    // Mock real-time log streaming
-    const interval = setInterval(() => {
-      const template = logTemplates[Math.floor(Math.random() * logTemplates.length)];
-      const newLog: LogEntry = {
-        timestamp: new Date().toLocaleTimeString('en-US', { hour12: false }),
-        ...template
-      };
+    const connectWebSocket = () => {
+      try {
+        wsRef.current = api.createLogWebSocket(
+          (newLog: LogEntry) => {
+            setLogs(prev => [...prev.slice(-49), newLog]);
+          },
+          (error) => {
+            console.error('WebSocket error:', error);
+            setIsConnected(false);
+            setTimeout(connectWebSocket, 5000);
+          }
+        );
 
-      setLogs(prev => [...prev.slice(-50), newLog]);
-    }, Math.random() * 3000 + 2000);
+        wsRef.current.onopen = () => {
+          setIsConnected(true);
+        };
 
-    return () => clearInterval(interval);
+        wsRef.current.onclose = () => {
+          setIsConnected(false);
+        };
+      } catch (error) {
+        console.error('Failed to create WebSocket connection:', error);
+        setIsConnected(false);
+      }
+    };
+
+    loadInitialLogs();
+    connectWebSocket();
+
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -133,8 +136,11 @@ export const RealTimeLogs = () => {
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-bold tracking-wider flex items-center">
             <Activity className="mr-2 h-5 w-5 text-red-500" />
-            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-3"></span>
+            <span className={`w-2 h-2 rounded-full animate-pulse mr-3 ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></span>
             LIVE OPERATIONS LOG
+            <span className={`ml-2 text-xs ${isConnected ? 'text-green-400' : 'text-red-400'}`}>
+              {isConnected ? '● CONNECTED' : '● DISCONNECTED'}
+            </span>
           </CardTitle>
           
           <div className="flex items-center space-x-2">

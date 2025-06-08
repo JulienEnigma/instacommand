@@ -4,28 +4,44 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Play, Pause, RotateCcw, Trash2, Zap, Crosshair, Power } from 'lucide-react';
 import { toast } from "sonner";
+import api from '@/lib/api';
 
 export const MissionControls = () => {
-  const executeCommand = (command: string, action: string) => {
-    // Show more specific feedback based on action type
-    switch (action) {
-      case 'start':
-        toast.success(`✅ Browser automation initiated - scanning targets`);
-        break;
-      case 'pause':
-        toast.warning(`⏸️ All operations paused - ${new Date().toLocaleTimeString()}`);
-        break;
-      case 'upgrade':
-        toast.info(`🔄 Forcing reflex update - ETA 30 seconds`);
-        break;
-      case 'clear':
-        toast.success(`🗑️ Logs cleared - ${new Date().toLocaleTimeString()}`);
-        break;
-      case 'terminate':
-        toast.error(`🛑 Browser session terminated - all processes stopped`);
-        break;
-      default:
-        toast.success(`EXECUTING: ${command}`);
+  const executeCommand = async (command: string, action: string) => {
+    try {
+      let response;
+      
+      switch (action) {
+        case 'start':
+          response = await api.resumeOperations();
+          toast.success(`✅ Browser automation initiated - scanning targets`);
+          break;
+        case 'pause':
+          response = await api.pauseOperations();
+          toast.warning(`⏸️ All operations paused - ${new Date().toLocaleTimeString()}`);
+          break;
+        case 'upgrade':
+          response = await api.generateText('System reflex update initiated', 50);
+          toast.info(`🔄 Forcing reflex update - ETA 30 seconds`);
+          break;
+        case 'clear':
+          toast.success(`🗑️ Logs cleared - ${new Date().toLocaleTimeString()}`);
+          break;
+        case 'terminate':
+          response = await api.pauseOperations();
+          toast.error(`🛑 Browser session terminated - all processes stopped`);
+          break;
+        default:
+          toast.success(`EXECUTING: ${command}`);
+      }
+      
+      if (response && !response.success) {
+        throw new Error(response.message || 'Operation failed');
+      }
+      
+    } catch (error) {
+      console.error('Command execution error:', error);
+      toast.error(`❌ Command failed: ${error instanceof Error ? error.message : 'Backend unavailable'}`);
     }
   };
 
