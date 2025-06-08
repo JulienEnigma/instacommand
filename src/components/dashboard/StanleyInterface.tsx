@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -27,13 +26,13 @@ export const StanleyInterface = () => {
     }
   ]);
 
-  const stanleyThoughts = [
-    { type: 'warning', message: 'Engagement levels dropping. Switching to fallback strategy.', priority: 'high' },
-    { type: 'insight', message: 'Optimal targeting window detected for film community.', priority: 'medium' },
-    { type: 'decision', message: 'Adjusting comment patterns for higher authenticity.', priority: 'medium' },
-    { type: 'status', message: 'Processing 847 new potential targets from hashtag sweep.', priority: 'low' },
-    { type: 'warning', message: 'Rate limit approaching. Implementing cool-down protocol.', priority: 'high' },
-    { type: 'insight', message: 'User behavioral pattern suggests peak activity in 2 hours.', priority: 'medium' }
+  const stanleyThoughts: Omit<StanleyMessage, 'timestamp'>[] = [
+    { type: 'warning' as const, message: 'Engagement levels dropping. Switching to fallback strategy.', priority: 'high' as const },
+    { type: 'insight' as const, message: 'Optimal targeting window detected for film community.', priority: 'medium' as const },
+    { type: 'decision' as const, message: 'Adjusting comment patterns for higher authenticity.', priority: 'medium' as const },
+    { type: 'status' as const, message: 'Processing 847 new potential targets from hashtag sweep.', priority: 'low' as const },
+    { type: 'warning' as const, message: 'Rate limit approaching. Implementing cool-down protocol.', priority: 'high' as const },
+    { type: 'insight' as const, message: 'User behavioral pattern suggests peak activity in 2 hours.', priority: 'medium' as const }
   ];
 
   useEffect(() => {
