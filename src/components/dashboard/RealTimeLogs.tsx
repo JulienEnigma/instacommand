@@ -1,8 +1,8 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
+import { Download } from 'lucide-react';
 
 interface LogEntry {
   timestamp: string;
@@ -102,6 +102,25 @@ export const RealTimeLogs = () => {
     );
   };
 
+  const exportLogs = (format: 'json' | 'csv') => {
+    const dataStr = format === 'json' 
+      ? JSON.stringify(logs, null, 2)
+      : [
+          'Timestamp,Action,Target,Details,Type,Outcome,Probability,FollowbackChance',
+          ...logs.map(log => 
+            `"${log.timestamp}","${log.action}","${log.target || ''}","${log.details}","${log.type}","${log.outcome}","${log.probability || ''}","${log.followbackChance || ''}"`
+          )
+        ].join('\n');
+    
+    const dataBlob = new Blob([dataStr], { type: format === 'json' ? 'application/json' : 'text/csv' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `stanley-logs-${new Date().toISOString().split('T')[0]}.${format}`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const filteredLogs = logs.filter(log => {
     if (filter === 'all') return true;
     if (filter === 'error') return log.outcome === 'error';
@@ -117,22 +136,45 @@ export const RealTimeLogs = () => {
             LIVE OPERATIONS LOG
           </CardTitle>
           
-          <div className="flex space-x-1">
-            {['all', 'follow', 'dm', 'error', 'stanley'].map((filterType) => (
+          <div className="flex items-center space-x-2">
+            <div className="flex space-x-1">
+              {['all', 'follow', 'dm', 'error', 'stanley'].map((filterType) => (
+                <Button
+                  key={filterType}
+                  size="sm"
+                  variant={filter === filterType ? 'default' : 'outline'}
+                  onClick={() => setFilter(filterType as any)}
+                  className={`text-xs ${
+                    filter === filterType 
+                      ? 'bg-red-700 text-white' 
+                      : 'bg-black/40 border-red-800/30 text-red-400 hover:bg-red-900/30'
+                  }`}
+                >
+                  {filterType === 'error' ? '🔴' : filterType === 'stanley' ? '🧠' : ''}{filterType.toUpperCase()}
+                </Button>
+              ))}
+            </div>
+            
+            <div className="flex space-x-1">
               <Button
-                key={filterType}
                 size="sm"
-                variant={filter === filterType ? 'default' : 'outline'}
-                onClick={() => setFilter(filterType as any)}
-                className={`text-xs ${
-                  filter === filterType 
-                    ? 'bg-red-700 text-white' 
-                    : 'bg-black/40 border-red-800/30 text-red-400 hover:bg-red-900/30'
-                }`}
+                onClick={() => exportLogs('json')}
+                className="bg-purple-600/30 text-purple-300 border-purple-600/50 hover:bg-purple-600/50 text-xs"
+                title="Export as JSON"
               >
-                {filterType === 'error' ? '🔴' : filterType === 'stanley' ? '🧠' : ''}{filterType.toUpperCase()}
+                <Download className="h-3 w-3" />
+                JSON
               </Button>
-            ))}
+              <Button
+                size="sm"
+                onClick={() => exportLogs('csv')}
+                className="bg-green-600/30 text-green-300 border-green-600/50 hover:bg-green-600/50 text-xs"
+                title="Export as CSV"
+              >
+                <Download className="h-3 w-3" />
+                CSV
+              </Button>
+            </div>
           </div>
         </div>
       </CardHeader>
