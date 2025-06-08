@@ -1,9 +1,30 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
-from services.llm_service import LLMService, StanleyAI
-from models import StanleyMessage
+from backend.services.llm_service import LLMService, StanleyAI
+from backend.models import StanleyMessage
 from datetime import datetime
+
+_llm_service = None
+_stanley_ai = None
+
+def set_llm_service(service):
+    global _llm_service
+    _llm_service = service
+
+def set_stanley_ai(service):
+    global _stanley_ai
+    _stanley_ai = service
+
+def get_llm_service():
+    if _llm_service is None:
+        raise HTTPException(status_code=503, detail="LLM service not initialized")
+    return _llm_service
+
+def get_stanley_ai():
+    if _stanley_ai is None:
+        raise HTTPException(status_code=503, detail="Stanley AI not initialized")
+    return _stanley_ai
 
 router = APIRouter(prefix="/llm", tags=["llm"])
 
@@ -34,12 +55,21 @@ class CommandSuggestionRequest(BaseModel):
 @router.post("/generate")
 async def generate_text(request: GenerateRequest):
     """Generate text using the LLM"""
-    return {"response": f"Generated response for: {request.prompt}"}
+    try:
+        llm_service = get_llm_service()
+        response = await llm_service.generate_text(
+            request.prompt, 
+            max_length=request.max_length,
+            temperature=request.temperature
+        )
+        return {"response": response}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Generation error: {str(e)}")
 
 @router.post("/analyze/logs")
 async def analyze_logs(
     request: AnalyzeLogsRequest,
-    llm_service = Depends()
+    llm_service = Depends(get_llm_service)
 ):
     """Analyze logs and provide insights"""
     try:
@@ -51,7 +81,7 @@ async def analyze_logs(
 @router.post("/suggest/targets")
 async def suggest_targets(
     request: SuggestTargetsRequest,
-    llm_service = Depends()
+    llm_service = Depends(get_llm_service)
 ):
     """Suggest targeting strategy"""
     try:
@@ -66,7 +96,7 @@ async def suggest_targets(
 @router.post("/generate/dm")
 async def generate_dm(
     request: GenerateDMRequest,
-    llm_service = Depends()
+    llm_service = Depends(get_llm_service)
 ):
     """Generate personalized DM message"""
     try:
@@ -82,7 +112,7 @@ async def generate_dm(
 @router.post("/analyze/campaign")
 async def analyze_campaign(
     request: CampaignAnalysisRequest,
-    llm_service = Depends()
+    llm_service = Depends(get_llm_service)
 ):
     """Analyze campaign performance"""
     try:
@@ -94,7 +124,7 @@ async def analyze_campaign(
 @router.post("/suggest/command")
 async def suggest_command(
     request: CommandSuggestionRequest,
-    llm_service = Depends()
+    llm_service = Depends(get_llm_service)
 ):
     """Generate command suggestions"""
     try:
@@ -107,9 +137,22 @@ async def suggest_command(
         raise HTTPException(status_code=500, detail=f"Command suggestion error: {str(e)}")
 
 @router.get("/status")
-async def get_llm_status(llm_service = Depends()):
+async def get_llm_status():
     """Get LLM model status"""
-    return await llm_service.get_model_status()
+    try:
+        llm_service = get_llm_service()
+        return await llm_service.get_model_status()
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@router.get("/debug/fallback")
+async def test_fallback_model(llm_service = Depends(get_llm_service)):
+    """Test fallback model functionality"""
+    try:
+        response = await llm_service.generate_text("Test fallback response", max_length=50)
+        return {"fallback_test": "success", "response": response}
+    except Exception as e:
+        return {"fallback_test": "failed", "error": str(e)}
 
 @router.post("/stanley/insight")
 async def stanley_insight():
@@ -125,7 +168,7 @@ async def stanley_insight():
 @router.post("/stanley/recommendation")
 async def stanley_recommendation(
     data: Dict[str, Any],
-    stanley_ai = Depends()
+    stanley_ai = Depends(get_stanley_ai)
 ):
     """Get Stanley's recommendation"""
     try:
@@ -143,7 +186,7 @@ async def stanley_recommendation(
 @router.post("/stanley/alert")
 async def stanley_alert(
     issue: str,
-    stanley_ai = Depends()
+    stanley_ai = Depends(get_stanley_ai)
 ):
     """Get Stanley's alert"""
     try:

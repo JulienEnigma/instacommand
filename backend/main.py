@@ -7,14 +7,18 @@ import asyncio
 import os
 import logging
 
-from database.sqlite_db import DatabaseManager, init_database
-from services.logging_service import LoggingService
-from services.instagram_service import InstagramService
-from services.queue_service import QueueService, TaskType
-from services.llm_service import LLMService, StanleyAI
-from config.settings import settings
-from routes import auth_router, instagram_router, logs_router, llm_router, status_router
-from error_handling import setup_error_handling
+from backend.database.sqlite_db import DatabaseManager, init_database
+from backend.services.logging_service import LoggingService
+from backend.services.instagram_service import InstagramService
+from backend.services.queue_service import QueueService, TaskType
+from backend.services.llm_service import LLMService, StanleyAI
+from backend.services.campaign_service import CampaignService
+from backend.services.profile_mirror_service import ProfileMirrorService
+from backend.config.settings import settings
+from backend.routes import auth_router, instagram_router, logs_router, llm_router, status_router
+from backend.routes.campaigns import router as campaigns_router
+from backend.routes.captcha import router as captcha_router
+from backend.error_handling import setup_error_handling
 
 logging.basicConfig(
     level=logging.INFO,
@@ -31,10 +35,12 @@ instagram_service = None
 queue_service = None
 llm_service = None
 stanley_ai = None
+campaign_service = None
+profile_mirror_service = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global db_manager, logging_service, instagram_service, queue_service, llm_service, stanley_ai
+    global db_manager, logging_service, instagram_service, queue_service, llm_service, stanley_ai, campaign_service, profile_mirror_service
     
     db_manager = init_database(settings.database_url)
     
@@ -47,9 +53,17 @@ async def lifespan(app: FastAPI):
     llm_service = LLMService(logging_service, settings.llm_model_name)
     stanley_ai = StanleyAI(llm_service)
     
+    from backend.routes.llm import set_llm_service, set_stanley_ai
+    set_llm_service(llm_service)
+    set_stanley_ai(stanley_ai)
+    
+    profile_mirror_service = ProfileMirrorService(logging_service, instagram_service)
+    campaign_service = CampaignService(logging_service, llm_service, instagram_service, queue_service)
+    
     queue_service.register_handler(TaskType.SCAN, instagram_service.scan_hashtag)
     queue_service.register_handler(TaskType.FOLLOW, instagram_service.follow_user)
     queue_service.register_handler(TaskType.DM, instagram_service.send_dm)
+    queue_service.register_handler(TaskType.PROFILE_MIRROR, profile_mirror_service.sync_profile_mirror)
     
     await logging_service.log_system_message("Social Commander Backend starting up...")
     
@@ -102,6 +116,12 @@ def get_llm_service():
 def get_stanley_ai():
     return stanley_ai
 
+def get_campaign_service():
+    return campaign_service
+
+def get_profile_mirror_service():
+    return profile_mirror_service
+
 from fastapi import Depends
 
 def get_dependencies():
@@ -111,17 +131,9 @@ def get_dependencies():
         "instagram_service": instagram_service,
         "queue_service": queue_service,
         "llm_service": llm_service,
-        "stanley_ai": stanley_ai
-    }
-
-def get_dependencies():
-    return {
-        "db_manager": db_manager,
-        "logging_service": logging_service,
-        "instagram_service": instagram_service,
-        "queue_service": queue_service,
-        "llm_service": llm_service,
-        "stanley_ai": stanley_ai
+        "stanley_ai": stanley_ai,
+        "campaign_service": campaign_service,
+        "profile_mirror_service": profile_mirror_service
     }
 
 
@@ -130,6 +142,8 @@ app.include_router(instagram_router)
 app.include_router(logs_router)
 app.include_router(llm_router)
 app.include_router(status_router)
+app.include_router(campaigns_router)
+app.include_router(captcha_router)
 
 @app.get("/")
 async def root():
@@ -142,7 +156,9 @@ async def root():
             "instagram": "/instagram", 
             "logs": "/logs",
             "llm": "/llm",
-            "status": "/status"
+            "status": "/status",
+            "campaigns": "/campaigns",
+            "captcha": "/captcha"
         }
     }
 

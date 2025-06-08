@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional
-from services.instagram_service import InstagramService
-from services.logging_service import LoggingService
+from backend.services.instagram_service import InstagramService
+from backend.services.logging_service import LoggingService
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 

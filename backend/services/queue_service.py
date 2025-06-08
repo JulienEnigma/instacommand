@@ -3,7 +3,8 @@ from typing import Dict, Any, Optional, Callable
 from datetime import datetime, timedelta
 from enum import Enum
 from dataclasses import dataclass
-from .logging_service import LoggingService
+from backend.services.logging_service import LoggingService
+from backend.config.settings import settings
 
 class TaskType(Enum):
     FOLLOW = "follow"
@@ -11,6 +12,7 @@ class TaskType(Enum):
     SCAN = "scan"
     COMMENT = "comment"
     LIKE = "like"
+    PROFILE_MIRROR = "profile_mirror"
 
 @dataclass
 class QueuedTask:
@@ -32,25 +34,33 @@ class QueueService:
         self.task_handlers: Dict[TaskType, Callable] = {}
         
         self.daily_limits = {
-            TaskType.FOLLOW: 200,
-            TaskType.DM: 50,
+            TaskType.FOLLOW: settings.max_follows,
+            TaskType.DM: settings.max_dms,
             TaskType.SCAN: 100,
             TaskType.COMMENT: 150,
-            TaskType.LIKE: 500
+            TaskType.LIKE: settings.max_likes,
+            TaskType.PROFILE_MIRROR: 2880  # Every 30 seconds = 2880 per day
         }
         
         self.hourly_limits = {
-            TaskType.FOLLOW: 20,
-            TaskType.DM: 5,
+            TaskType.FOLLOW: max(1, settings.max_follows // 24),
+            TaskType.DM: max(1, settings.max_dms // 24),
             TaskType.SCAN: 10,
             TaskType.COMMENT: 15,
-            TaskType.LIKE: 50
+            TaskType.LIKE: max(1, settings.max_likes // 24),
+            TaskType.PROFILE_MIRROR: 120  # Every 30 seconds = 120 per hour
         }
         
         self.daily_counts = {task_type: 0 for task_type in TaskType}
         self.hourly_counts = {task_type: 0 for task_type in TaskType}
         self.last_reset_hour = datetime.now().hour
         self.last_reset_day = datetime.now().date()
+        
+        self.last_action_type = None
+        self.last_action_time = None
+        self.failure_count = 0
+        self.last_failure_time = None
+        self.profile_mirror_task = None
     
     def register_handler(self, task_type: TaskType, handler: Callable):
         """Register a handler function for a task type"""
@@ -88,9 +98,15 @@ class QueueService:
         self.is_processing = True
         await self.logging_service.log_system_message("Queue processing started")
         
+        self.profile_mirror_task = asyncio.create_task(self._profile_mirror_loop())
+        
         while self.is_processing:
             try:
                 self._reset_counters_if_needed()
+                
+                if await self._should_pause_for_failures():
+                    await asyncio.sleep(60)
+                    continue
                 
                 try:
                     priority_score, task = await asyncio.wait_for(
@@ -101,7 +117,7 @@ class QueueService:
                 
                 if datetime.now() < task.scheduled_time:
                     await self.task_queue.put((priority_score, task))
-                    await asyncio.sleep(30)  # Wait before checking again
+                    await asyncio.sleep(30)
                     continue
                 
                 if not self._check_rate_limits(task.task_type):
@@ -109,22 +125,30 @@ class QueueService:
                     await self.task_queue.put((priority_score, task))
                     continue
                 
-                await self._execute_task(task)
+                if await self._should_skip_consecutive_action(task.task_type):
+                    task.scheduled_time = datetime.now() + timedelta(minutes=5)
+                    await self.task_queue.put((priority_score, task))
+                    continue
+                
+                await self._execute_task_with_human_timing(task)
                 
                 self.daily_counts[task.task_type] += 1
                 self.hourly_counts[task.task_type] += 1
-                
-                await asyncio.sleep(30)  # 30 second delay between tasks
+                self.last_action_type = task.task_type
+                self.last_action_time = datetime.now()
                 
             except Exception as e:
                 await self.logging_service.log_system_message(
                     f"Queue processing error: {str(e)}", "error"
                 )
-                await asyncio.sleep(60)  # Wait before retrying
+                await self._handle_failure()
+                await asyncio.sleep(60)
     
     async def stop_processing(self):
         """Stop processing tasks"""
         self.is_processing = False
+        if self.profile_mirror_task:
+            self.profile_mirror_task.cancel()
         await self.logging_service.log_system_message("Queue processing stopped")
     
     async def _execute_task(self, task: QueuedTask):
@@ -190,6 +214,73 @@ class QueueService:
             self.daily_counts = {task_type: 0 for task_type in TaskType}
             self.last_reset_day = now.date()
     
+    async def _profile_mirror_loop(self):
+        """Run profile mirror sync every 30 seconds"""
+        while self.is_processing:
+            try:
+                if self._check_rate_limits(TaskType.PROFILE_MIRROR):
+                    handler = self.task_handlers.get(TaskType.PROFILE_MIRROR)
+                    if handler:
+                        await handler("profile_sync", {"sync_type": "regular"})
+                        self.daily_counts[TaskType.PROFILE_MIRROR] += 1
+                        self.hourly_counts[TaskType.PROFILE_MIRROR] += 1
+                
+                await asyncio.sleep(30)
+                
+            except Exception as e:
+                await self.logging_service.log_system_message(
+                    f"Profile mirror error: {str(e)}", "error"
+                )
+                await asyncio.sleep(30)
+    
+    async def _execute_task_with_human_timing(self, task: QueuedTask):
+        """Execute task with human-like timing"""
+        import random
+        
+        delay = random.uniform(settings.min_action_delay, settings.max_action_delay)
+        await asyncio.sleep(delay)
+        
+        await self._execute_task(task)
+    
+    async def _should_skip_consecutive_action(self, task_type: TaskType) -> bool:
+        """Check if we should skip consecutive actions of same type"""
+        if self.last_action_type == task_type and self.last_action_time:
+            time_since_last = datetime.now() - self.last_action_time
+            if time_since_last < timedelta(minutes=2):
+                return True
+        return False
+    
+    async def _handle_failure(self):
+        """Handle task failure with exponential backoff"""
+        self.failure_count += 1
+        self.last_failure_time = datetime.now()
+        
+        if self.failure_count >= 5:
+            await self.logging_service.log_system_message(
+                f"5 consecutive failures detected - pausing operations for {settings.failure_pause_minutes} minutes", 
+                "warning"
+            )
+    
+    def _reset_failure_count(self):
+        """Reset failure count after successful operation"""
+        self.failure_count = 0
+        self.last_failure_time = None
+    
+    async def _should_pause_for_failures(self) -> bool:
+        """Check if operations should be paused due to failures"""
+        if self.failure_count >= 5 and self.last_failure_time:
+            pause_duration = timedelta(minutes=settings.failure_pause_minutes)
+            if datetime.now() - self.last_failure_time < pause_duration:
+                remaining = pause_duration - (datetime.now() - self.last_failure_time)
+                await self.logging_service.log_system_message(
+                    f"Operations paused due to failures - {remaining.seconds} seconds remaining", 
+                    "warning"
+                )
+                return True
+            else:
+                self._reset_failure_count()
+        return False
+    
     def get_queue_status(self) -> Dict[str, Any]:
         """Get current queue status"""
         return {
@@ -198,5 +289,7 @@ class QueueService:
             "daily_counts": self.daily_counts.copy(),
             "hourly_counts": self.hourly_counts.copy(),
             "daily_limits": self.daily_limits.copy(),
-            "hourly_limits": self.hourly_limits.copy()
+            "hourly_limits": self.hourly_limits.copy(),
+            "failure_count": self.failure_count,
+            "last_action_type": self.last_action_type.value if self.last_action_type else None
         }

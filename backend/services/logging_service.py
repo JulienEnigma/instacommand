@@ -3,8 +3,8 @@ import json
 from typing import List, Set, Optional
 from datetime import datetime
 from fastapi import WebSocket
-from database.sqlite_db import DatabaseManager
-from models import LogEntry
+from backend.database.sqlite_db import DatabaseManager
+from backend.models import LogEntry
 
 class LoggingService:
     def __init__(self, db_manager: DatabaseManager):

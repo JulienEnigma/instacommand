@@ -2,7 +2,7 @@ import sqlite3
 import json
 from typing import List, Optional
 from datetime import datetime
-from models import LogEntry, Campaign, Target, Command
+from backend.models import LogEntry, Campaign, Target, Command
 
 class DatabaseManager:
     def __init__(self, db_path: str = "social_commander.db"):
@@ -11,11 +11,12 @@ class DatabaseManager:
     
     def init_database(self):
         """Initialize database tables"""
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS logs (
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS logs (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     timestamp TEXT NOT NULL,
                     action TEXT NOT NULL,
@@ -26,11 +27,11 @@ class DatabaseManager:
                     probability REAL,
                     followback_chance REAL,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS campaigns (
+                    )
+                """)
+                
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS campaigns (
                     id TEXT PRIMARY KEY,
                     name TEXT NOT NULL,
                     codename TEXT NOT NULL,
@@ -44,11 +45,11 @@ class DatabaseManager:
                     verdict TEXT,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS targets (
+                    )
+                """)
+                
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS targets (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     username TEXT NOT NULL UNIQUE,
                     bio TEXT NOT NULL,
@@ -64,32 +65,35 @@ class DatabaseManager:
                     user_tags TEXT NOT NULL,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS commands (
+                    )
+                """)
+                
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS commands (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     input TEXT NOT NULL,
                     output TEXT NOT NULL,
                     timestamp TEXT NOT NULL,
                     success BOOLEAN NOT NULL,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS user_sessions (
+                    )
+                """)
+                
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS user_sessions (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     instagram_username TEXT,
                     session_token TEXT,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     expires_at DATETIME,
                     is_active BOOLEAN DEFAULT TRUE
-                )
-            """)
-            
-            conn.commit()
+                    )
+                """)
+                
+                conn.commit()
+        except sqlite3.Error as e:
+            print(f"Database initialization error: {e}")
+            raise
     
     def add_log_entry(self, log_entry: LogEntry) -> int:
         """Add a new log entry"""
