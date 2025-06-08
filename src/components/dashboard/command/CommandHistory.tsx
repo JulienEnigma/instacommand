@@ -16,16 +16,16 @@ interface CommandHistoryProps {
 
 export const CommandHistory: React.FC<CommandHistoryProps> = ({ commandHistory }) => {
   return (
-    <Card className="bg-black/60 border-red-800/30 text-red-400 backdrop-blur-md shadow-lg shadow-red-500/20 flex-1">
-      <CardHeader className="pb-3">
+    <Card className="bg-black/60 border-red-800/30 text-red-400 backdrop-blur-md shadow-lg shadow-red-500/20 h-full flex flex-col">
+      <CardHeader className="pb-2 flex-shrink-0">
         <CardTitle className="text-sm font-bold tracking-wider">COMMAND HISTORY</CardTitle>
       </CardHeader>
-      <CardContent className="h-[calc(100%-60px)]">
+      <CardContent className="flex-1 overflow-hidden p-3">
         <ScrollArea className="h-full">
-          <div className="space-y-3 font-mono text-xs">
+          <div className="space-y-2 font-mono text-xs">
             {commandHistory.slice().reverse().map((cmd, index) => (
-              <div key={index} className="flex items-start space-x-3 py-1 animate-fade-in">
-                <span className="text-red-500/70 text-xs w-20 flex-shrink-0 font-mono">
+              <div key={index} className="flex items-start space-x-2 py-1 animate-fade-in">
+                <span className="text-red-500/70 text-xs w-16 flex-shrink-0 font-mono">
                   [{cmd.timestamp}]
                 </span>
                 <div className="flex-1 min-w-0">

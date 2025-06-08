@@ -68,17 +68,17 @@ export const MissionControls = () => {
   ];
 
   return (
-    <Card className="bg-black/60 border-red-800/30 text-red-400 backdrop-blur-md shadow-lg shadow-red-500/20 h-full">
-      <CardHeader className="pb-4">
+    <Card className="bg-black/60 border-red-800/30 text-red-400 backdrop-blur-md shadow-lg shadow-red-500/20 h-full flex flex-col">
+      <CardHeader className="pb-2 flex-shrink-0">
         <CardTitle className="text-lg font-bold tracking-wider flex items-center">
-          <Crosshair className="mr-2 h-5 w-5 text-red-500" />
+          <Crosshair className="mr-2 h-4 w-4 text-red-500" />
           MISSION CONTROLS
         </CardTitle>
       </CardHeader>
-      <CardContent className="h-[calc(100%-90px)] p-6">
-        <div className="flex flex-col gap-6 h-full">
+      <CardContent className="flex-1 p-3">
+        <div className="flex flex-col gap-3 h-full">
           {/* First row - START and PAUSE */}
-          <div className="grid grid-cols-2 gap-6 flex-1">
+          <div className="grid grid-cols-2 gap-3 flex-1">
             {controls.slice(0, 2).map((control, index) => {
               const IconComponent = control.icon;
               return (
@@ -86,8 +86,8 @@ export const MissionControls = () => {
                   key={index}
                   onClick={() => executeCommand(control.command, control.action)}
                   className={`
-                    group relative flex flex-col items-center justify-center p-6 h-full min-h-[100px]
-                    rounded-xl border backdrop-blur-xl
+                    group relative flex flex-col items-center justify-center p-2 h-full min-h-[50px]
+                    rounded-lg border backdrop-blur-xl
                     font-semibold text-xs leading-tight tracking-wide
                     transition-all duration-500 ease-out
                     hover:scale-105 active:scale-95
@@ -95,23 +95,20 @@ export const MissionControls = () => {
                     ${control.glassStyle}
                   `}
                 >
-                  <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <div className="absolute inset-0 rounded-xl shadow-inner opacity-20" />
-                  <div className="relative z-10 flex flex-col items-center justify-center gap-3">
-                    <IconComponent className="h-6 w-6 flex-shrink-0 drop-shadow-sm" />
-                    <span className="text-center break-words px-2 drop-shadow-sm">
+                  <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="relative z-10 flex flex-col items-center justify-center gap-1">
+                    <IconComponent className="h-4 w-4 flex-shrink-0 drop-shadow-sm" />
+                    <span className="text-center break-words px-1 drop-shadow-sm text-xs">
                       {control.label}
                     </span>
                   </div>
-                  <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10" 
-                       style={{ boxShadow: 'inset 0 0 20px currentColor' }} />
                 </button>
               );
             })}
           </div>
 
           {/* Second row - REFLEX and CLEAR */}
-          <div className="grid grid-cols-2 gap-6 flex-1">
+          <div className="grid grid-cols-2 gap-3 flex-1">
             {controls.slice(2, 4).map((control, index) => {
               const IconComponent = control.icon;
               return (
@@ -119,8 +116,8 @@ export const MissionControls = () => {
                   key={index + 2}
                   onClick={() => executeCommand(control.command, control.action)}
                   className={`
-                    group relative flex flex-col items-center justify-center p-6 h-full min-h-[100px]
-                    rounded-xl border backdrop-blur-xl
+                    group relative flex flex-col items-center justify-center p-2 h-full min-h-[50px]
+                    rounded-lg border backdrop-blur-xl
                     font-semibold text-xs leading-tight tracking-wide
                     transition-all duration-500 ease-out
                     hover:scale-105 active:scale-95
@@ -128,16 +125,13 @@ export const MissionControls = () => {
                     ${control.glassStyle}
                   `}
                 >
-                  <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <div className="absolute inset-0 rounded-xl shadow-inner opacity-20" />
-                  <div className="relative z-10 flex flex-col items-center justify-center gap-3">
-                    <IconComponent className="h-6 w-6 flex-shrink-0 drop-shadow-sm" />
-                    <span className="text-center break-words px-2 drop-shadow-sm">
+                  <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="relative z-10 flex flex-col items-center justify-center gap-1">
+                    <IconComponent className="h-4 w-4 flex-shrink-0 drop-shadow-sm" />
+                    <span className="text-center break-words px-1 drop-shadow-sm text-xs">
                       {control.label}
                     </span>
                   </div>
-                  <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10" 
-                       style={{ boxShadow: 'inset 0 0 20px currentColor' }} />
                 </button>
               );
             })}
@@ -148,8 +142,8 @@ export const MissionControls = () => {
             <button
               onClick={() => executeCommand(controls[4].command, controls[4].action)}
               className={`
-                group relative flex flex-col items-center justify-center p-6 w-full h-full min-h-[100px]
-                rounded-xl border backdrop-blur-xl
+                group relative flex flex-col items-center justify-center p-2 w-full h-full min-h-[50px]
+                rounded-lg border backdrop-blur-xl
                 font-semibold text-xs leading-tight tracking-wide
                 transition-all duration-500 ease-out
                 hover:scale-105 active:scale-95
@@ -157,16 +151,13 @@ export const MissionControls = () => {
                 ${controls[4].glassStyle}
               `}
             >
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="absolute inset-0 rounded-xl shadow-inner opacity-20" />
-              <div className="relative z-10 flex flex-col items-center justify-center gap-3">
-                <Power className="h-6 w-6 flex-shrink-0 drop-shadow-sm" />
-                <span className="text-center break-words px-2 drop-shadow-sm">
+              <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="relative z-10 flex flex-col items-center justify-center gap-1">
+                <Power className="h-4 w-4 flex-shrink-0 drop-shadow-sm" />
+                <span className="text-center break-words px-1 drop-shadow-sm text-xs">
                   {controls[4].label}
                 </span>
               </div>
-              <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10" 
-                   style={{ boxShadow: 'inset 0 0 20px currentColor' }} />
             </button>
           </div>
         </div>

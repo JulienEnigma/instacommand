@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { toast } from "sonner";
 import { StanleySuggestions } from './command/StanleySuggestions';
@@ -177,29 +176,37 @@ export const CommandInterface = () => {
   }, []);
 
   return (
-    <div className="space-y-4 h-full">
-      <StanleySuggestions
-        suggestions={stanleySuggestions}
-        showSuggestions={showSuggestions}
-        onToggleShow={() => setShowSuggestions(!showSuggestions)}
-        onClearAll={() => setStanleySuggestions([])}
-        onUseSuggestion={executeSuggestion}
-      />
+    <div className="h-full flex flex-col space-y-2">
+      {stanleySuggestions.length > 0 && showSuggestions && (
+        <div className="flex-shrink-0">
+          <StanleySuggestions
+            suggestions={stanleySuggestions}
+            showSuggestions={showSuggestions}
+            onToggleShow={() => setShowSuggestions(!showSuggestions)}
+            onClearAll={() => setStanleySuggestions([])}
+            onUseSuggestion={executeSuggestion}
+          />
+        </div>
+      )}
 
-      <CommandInput
-        commandInput={commandInput}
-        isExecuting={isExecuting}
-        historyIndex={historyIndex}
-        showAutocomplete={showAutocomplete}
-        onInputChange={handleInputChange}
-        onKeyDown={handleKeyDown}
-        onExecute={executeCommand}
-        getCommandSuggestions={getCommandSuggestions}
-        setCommandInput={setCommandInput}
-        quickCommands={quickCommands}
-      />
+      <div className="flex-shrink-0">
+        <CommandInput
+          commandInput={commandInput}
+          isExecuting={isExecuting}
+          historyIndex={historyIndex}
+          showAutocomplete={showAutocomplete}
+          onInputChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          onExecute={executeCommand}
+          getCommandSuggestions={getCommandSuggestions}
+          setCommandInput={setCommandInput}
+          quickCommands={quickCommands}
+        />
+      </div>
 
-      <CommandHistory commandHistory={commandHistory} />
+      <div className="flex-1 min-h-0">
+        <CommandHistory commandHistory={commandHistory} />
+      </div>
     </div>
   );
 };

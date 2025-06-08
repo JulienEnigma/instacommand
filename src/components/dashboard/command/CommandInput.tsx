@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Terminal, Zap, ArrowUp } from 'lucide-react';
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface CommandInputProps {
   commandInput: string;
@@ -33,15 +34,15 @@ export const CommandInput: React.FC<CommandInputProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <Card className="bg-black/60 border-red-800/30 text-red-400 backdrop-blur-md shadow-lg shadow-red-500/20 flex-1">
-      <CardHeader className="pb-3">
+    <Card className="bg-black/60 border-red-800/30 text-red-400 backdrop-blur-md shadow-lg shadow-red-500/20 h-full flex flex-col">
+      <CardHeader className="pb-2 flex-shrink-0">
         <CardTitle className="text-lg font-bold tracking-wider flex items-center">
-          <Terminal className="mr-2 h-5 w-5 text-red-500" />
+          <Terminal className="mr-2 h-4 w-4 text-red-500" />
           COMMAND INTERFACE
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4 h-[calc(100%-80px)]">
-        <div className="relative">
+      <CardContent className="flex-1 flex flex-col space-y-2 p-3">
+        <div className="relative flex-shrink-0">
           <div className="flex space-x-2">
             <div className="relative flex-1">
               <Input
@@ -77,7 +78,7 @@ export const CommandInput: React.FC<CommandInputProps> = ({
             <Button 
               onClick={onExecute}
               disabled={isExecuting}
-              className={`px-6 font-bold transition-all duration-300 flex-shrink-0 ${
+              className={`px-4 font-bold transition-all duration-300 flex-shrink-0 ${
                 isExecuting 
                   ? 'bg-red-900 text-red-300 animate-pulse' 
                   : 'bg-red-700 hover:bg-red-600 text-black hover:shadow-lg hover:shadow-red-500/50'
@@ -85,7 +86,7 @@ export const CommandInput: React.FC<CommandInputProps> = ({
             >
               {isExecuting ? (
                 <>
-                  <Zap className="mr-2 h-4 w-4 animate-spin" />
+                  <Zap className="mr-1 h-3 w-3 animate-spin" />
                   EXEC
                 </>
               ) : (
@@ -103,23 +104,25 @@ export const CommandInput: React.FC<CommandInputProps> = ({
           )}
         </div>
         
-        <div className="flex-1">
-          <div className="text-xs text-red-500/70 mb-2 tracking-wider">
+        <div className="flex-1 min-h-0">
+          <div className="text-xs text-red-500/70 mb-1 tracking-wider">
             QUICK COMMANDS: (↑/↓ for history, Tab to autocomplete)
           </div>
-          <div className="grid grid-cols-1 gap-1 max-h-20 overflow-y-auto">
-            {quickCommands.map((cmd, index) => (
-              <Button
-                key={index}
-                variant="outline"
-                size="sm"
-                onClick={() => setCommandInput(cmd)}
-                className="justify-start text-xs bg-black/60 border-red-800/30 text-red-400 hover:bg-red-900/30 hover:border-red-600 font-mono transition-all duration-200 break-words text-left"
-              >
-                {'>'} {cmd}
-              </Button>
-            ))}
-          </div>
+          <ScrollArea className="h-full">
+            <div className="grid grid-cols-1 gap-1">
+              {quickCommands.map((cmd, index) => (
+                <Button
+                  key={index}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCommandInput(cmd)}
+                  className="justify-start text-xs bg-black/60 border-red-800/30 text-red-400 hover:bg-red-900/30 hover:border-red-600 font-mono transition-all duration-200 break-words text-left h-auto py-1"
+                >
+                  {'>'} {cmd}
+                </Button>
+              ))}
+            </div>
+          </ScrollArea>
         </div>
       </CardContent>
     </Card>

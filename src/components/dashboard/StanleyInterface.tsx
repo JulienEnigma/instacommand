@@ -1,8 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Brain, TrendingUp, AlertCircle, Target } from 'lucide-react';
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface StanleyMessage {
   type: 'analysis' | 'alert' | 'recommendation' | 'status';
@@ -101,38 +101,42 @@ export const StanleyInterface = () => {
   };
 
   return (
-    <Card className="bg-black/60 border-red-800/30 text-red-400 backdrop-blur-md shadow-lg shadow-red-500/20">
-      <CardHeader className="pb-3">
+    <Card className="bg-black/60 border-red-800/30 text-red-400 backdrop-blur-md shadow-lg shadow-red-500/20 h-full flex flex-col">
+      <CardHeader className="pb-2 flex-shrink-0">
         <CardTitle className="text-lg font-bold tracking-wider flex items-center">
-          <Brain className="mr-2 h-5 w-5 text-red-500 animate-pulse" />
+          <Brain className="mr-2 h-4 w-4 text-red-500 animate-pulse" />
           STANLEY AI
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        {messages.map((msg, index) => (
-          <div 
-            key={index} 
-            className={`p-3 rounded border ${getPriorityColor(msg.priority)} animate-fade-in`}
-          >
-            <div className="flex items-start justify-between mb-1">
-              <div className="flex items-center space-x-2">
-                {getTypeIcon(msg.type)}
-                <Badge className="text-xs bg-red-900/30 text-red-300 border-red-700">
-                  {msg.type.toUpperCase()}
-                </Badge>
+      <CardContent className="flex-1 overflow-hidden p-3">
+        <ScrollArea className="h-full">
+          <div className="space-y-2">
+            {messages.map((msg, index) => (
+              <div 
+                key={index} 
+                className={`p-2 rounded border ${getPriorityColor(msg.priority)} animate-fade-in`}
+              >
+                <div className="flex items-start justify-between mb-1">
+                  <div className="flex items-center space-x-1">
+                    {getTypeIcon(msg.type)}
+                    <Badge className="text-xs bg-red-900/30 text-red-300 border-red-700">
+                      {msg.type.toUpperCase()}
+                    </Badge>
+                  </div>
+                  <span className="text-xs text-gray-500">{msg.timestamp}</span>
+                </div>
+                <div className="text-sm leading-relaxed mb-1">
+                  {msg.message}
+                </div>
+                {msg.data && (
+                  <div className="text-xs font-mono text-gray-400 mt-1 p-1 bg-black/40 rounded">
+                    {msg.data}
+                  </div>
+                )}
               </div>
-              <span className="text-xs text-gray-500">{msg.timestamp}</span>
-            </div>
-            <div className="text-sm leading-relaxed mb-1">
-              {msg.message}
-            </div>
-            {msg.data && (
-              <div className="text-xs font-mono text-gray-400 mt-2 p-2 bg-black/40 rounded">
-                {msg.data}
-              </div>
-            )}
+            ))}
           </div>
-        ))}
+        </ScrollArea>
       </CardContent>
     </Card>
   );
