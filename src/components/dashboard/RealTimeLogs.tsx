@@ -3,7 +3,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { Filter } from 'lucide-react';
 
 interface LogEntry {
   timestamp: string;
@@ -13,6 +12,7 @@ interface LogEntry {
   type: 'follow' | 'story' | 'dm' | 'engage' | 'scan' | 'system' | 'stanley';
   outcome: 'success' | 'warning' | 'error';
   probability?: number;
+  followbackChance?: number;
 }
 
 export const RealTimeLogs = () => {
@@ -21,18 +21,21 @@ export const RealTimeLogs = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const logTemplates = [
-    { action: '→ Followed', target: '@julien_film', details: 'Follow-back probability: 82%', type: 'follow' as const, outcome: 'success' as const, probability: 82 },
-    { action: '→ Viewed story', target: '@alice.k', details: 'Story engagement logged', type: 'story' as const, outcome: 'success' as const },
-    { action: '→ Engagement logged', target: '@filmfest.mythos', details: 'Added to high-value targets', type: 'engage' as const, outcome: 'success' as const },
-    { action: '→ DM sent', target: '@urban_lens', details: 'Message: "Amazing street work!" delivered', type: 'dm' as const, outcome: 'success' as const },
-    { action: '→ Hashtag scan', target: '#streetphotography', details: '12 new targets identified', type: 'scan' as const, outcome: 'success' as const },
-    { action: '→ Target analysis', target: '@photo_maven', details: 'Compatibility: 94% - queued', type: 'scan' as const, outcome: 'success' as const },
-    { action: '→ Post liked', target: '@creative_souls', details: 'Urban landscape series', type: 'engage' as const, outcome: 'success' as const },
-    { action: '→ Story batch', target: '@city_explorer', details: 'Viewed 3/5 stories in sequence', type: 'story' as const, outcome: 'success' as const },
-    { action: '→ Follow attempt', target: '@private_account', details: 'Account private - follow pending', type: 'follow' as const, outcome: 'warning' as const },
-    { action: '→ DM failed', target: '@restricted_user', details: 'DMs not allowed - user settings', type: 'dm' as const, outcome: 'error' as const },
+    { action: 'Followed', target: '@julien_film', details: 'Urban photographer - high compatibility', type: 'follow' as const, outcome: 'success' as const, probability: 82, followbackChance: 82 },
+    { action: 'Followed', target: '@alice.k', details: 'Film community member', type: 'follow' as const, outcome: 'success' as const, probability: 67, followbackChance: 67 },
+    { action: 'Followed', target: '@urban_lens', details: 'Street photography specialist', type: 'follow' as const, outcome: 'success' as const, probability: 91, followbackChance: 91 },
+    { action: 'Followed', target: '@photo_maven', details: 'Mutual connections: 3', type: 'follow' as const, outcome: 'success' as const, probability: 94, followbackChance: 94 },
+    { action: 'Viewed story', target: '@alice.k', details: 'Story engagement logged', type: 'story' as const, outcome: 'success' as const },
+    { action: 'Engagement logged', target: '@filmfest.mythos', details: 'Added to high-value targets', type: 'engage' as const, outcome: 'success' as const },
+    { action: 'DM sent', target: '@urban_lens', details: 'Message: "Amazing street work!" delivered', type: 'dm' as const, outcome: 'success' as const },
+    { action: 'Hashtag scan', target: '#streetphotography', details: '12 new targets identified', type: 'scan' as const, outcome: 'success' as const },
+    { action: 'Target analysis', target: '@creative_souls', details: 'Compatibility: 89% - queued', type: 'scan' as const, outcome: 'success' as const },
+    { action: 'Post liked', target: '@creative_souls', details: 'Urban landscape series', type: 'engage' as const, outcome: 'success' as const },
+    { action: 'Story batch', target: '@city_explorer', details: 'Viewed 3/5 stories in sequence', type: 'story' as const, outcome: 'success' as const },
+    { action: 'Follow attempt', target: '@private_account', details: 'Account private - follow pending', type: 'follow' as const, outcome: 'warning' as const, followbackChance: 45 },
+    { action: 'DM failed', target: '@restricted_user', details: 'DMs not allowed - user settings', type: 'dm' as const, outcome: 'error' as const },
     { action: '[Stanley] Strategy shift', target: '', details: 'Engagement down 12%. Switching to alternate pool.', type: 'stanley' as const, outcome: 'success' as const },
-    { action: '[Stanley] Suggestion', target: '', details: 'Type "pause ops" to avoid burnout', type: 'stanley' as const, outcome: 'success' as const },
+    { action: '[Stanley] Analysis', target: '', details: 'Follow-back rate: 73% (above target)', type: 'stanley' as const, outcome: 'success' as const },
     { action: '[SYS] Reflex update', target: '', details: 'Neural pathways optimized - v2.1.4', type: 'system' as const, outcome: 'success' as const },
   ];
 
@@ -86,6 +89,19 @@ export const RealTimeLogs = () => {
     }
   };
 
+  const getFollowbackDisplay = (followbackChance?: number) => {
+    if (!followbackChance) return null;
+    
+    const color = followbackChance >= 80 ? 'text-green-400' : 
+                  followbackChance >= 60 ? 'text-yellow-400' : 'text-red-400';
+    
+    return (
+      <span className={`${color} font-bold ml-2`}>
+        — followback probability: {followbackChance}%
+      </span>
+    );
+  };
+
   const filteredLogs = logs.filter(log => {
     if (filter === 'all') return true;
     if (filter === 'error') return log.outcome === 'error';
@@ -132,14 +148,10 @@ export const RealTimeLogs = () => {
                 <div className="flex-1 min-w-0">
                   <span className={getLogColor(log.type)}>
                     {log.action} {log.target && <span className="text-red-300 font-bold">{log.target}</span>}
+                    {log.type === 'follow' && getFollowbackDisplay(log.followbackChance)}
                   </span>
                   <div className="text-red-400/70 text-xs mt-1 ml-4 break-words">
                     {log.details}
-                    {log.probability && (
-                      <span className="text-green-400 font-bold ml-2">
-                        — followback probability: {log.probability}%
-                      </span>
-                    )}
                   </div>
                 </div>
               </div>
