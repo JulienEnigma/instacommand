@@ -34,7 +34,7 @@ const Dashboard = () => {
             <div className="flex items-center space-x-6">
               <div className="flex flex-col">
                 <h1 className="text-xl font-bold text-red-300 tracking-wider glitch-text">
-                  INSTACOMMAND
+                  SOCIAL COMMANDER
                 </h1>
                 <p className="text-xs text-red-500/70 tracking-wide">
                   Powered by EnigmaOS and Stanley • From Enigma Releasing
