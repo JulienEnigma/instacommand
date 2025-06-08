@@ -2,6 +2,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { Filter } from 'lucide-react';
 
 interface LogEntry {
   timestamp: string;
@@ -9,26 +11,27 @@ interface LogEntry {
   target?: string;
   details: string;
   type: 'follow' | 'story' | 'dm' | 'engage' | 'scan' | 'system';
+  outcome: 'success' | 'warning' | 'error';
 }
 
 export const RealTimeLogs = () => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [filter, setFilter] = useState<'all' | 'follow' | 'dm' | 'error'>('all');
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const logTemplates = [
-    { action: '→ Followed', target: '@julien_film', details: 'Engagement score: 8.2/10', type: 'follow' as const },
-    { action: '→ Viewed story of', target: '@alice.k', details: 'Story engagement +1', type: 'story' as const },
-    { action: '→ Logged engagement data for', target: '@filmfest.mythos', details: 'Data updated in target intel', type: 'engage' as const },
-    { action: '→ Sent contextual DM to', target: '@urban_lens', details: 'Message: "Amazing street photography!"', type: 'dm' as const },
-    { action: '→ Scanning hashtag', target: '#streetphotography', details: 'Found 12 new targets', type: 'scan' as const },
-    { action: '→ Target assessment', target: '@photo_maven', details: 'Compatibility: 94% - Added to queue', type: 'scan' as const },
-    { action: '→ Liked recent post by', target: '@creative_souls', details: 'Post: urban landscape series', type: 'engage' as const },
-    { action: '→ Story view completed', target: '@city_explorer', details: 'Viewed 3/5 stories', type: 'story' as const },
-    { action: '→ Profile analysis', target: '@visual_artist', details: 'High engagement potential detected', type: 'scan' as const },
-    { action: '→ Followed back by', target: '@indie_filmmaker', details: 'Mutual follow established', type: 'follow' as const },
-    { action: '[SYSTEM] Reflex node', target: '', details: 'Self-analysis cycle initiated', type: 'system' as const },
-    { action: '[SYSTEM] Target queue', target: '', details: 'Updated with 8 new prospects', type: 'system' as const },
-    { action: '→ Geographic scan', target: 'Los Angeles', details: 'Film industry targets identified', type: 'scan' as const },
+    { action: '→ Followed', target: '@julien_film', details: 'Follow-back probability: 82%', type: 'follow' as const, outcome: 'success' as const },
+    { action: '→ Viewed story', target: '@alice.k', details: 'Story engagement logged', type: 'story' as const, outcome: 'success' as const },
+    { action: '→ Engagement logged', target: '@filmfest.mythos', details: 'Added to high-value targets', type: 'engage' as const, outcome: 'success' as const },
+    { action: '→ DM sent', target: '@urban_lens', details: 'Message: "Amazing street work!" delivered', type: 'dm' as const, outcome: 'success' as const },
+    { action: '→ Hashtag scan', target: '#streetphotography', details: '12 new targets identified', type: 'scan' as const, outcome: 'success' as const },
+    { action: '→ Target analysis', target: '@photo_maven', details: 'Compatibility: 94% - queued', type: 'scan' as const, outcome: 'success' as const },
+    { action: '→ Post liked', target: '@creative_souls', details: 'Urban landscape series', type: 'engage' as const, outcome: 'success' as const },
+    { action: '→ Story batch', target: '@city_explorer', details: 'Viewed 3/5 stories in sequence', type: 'story' as const, outcome: 'success' as const },
+    { action: '→ Follow attempt', target: '@private_account', details: 'Account private - follow pending', type: 'follow' as const, outcome: 'warning' as const },
+    { action: '→ DM failed', target: '@restricted_user', details: 'DMs not allowed - user settings', type: 'dm' as const, outcome: 'error' as const },
+    { action: '[SYS] Reflex update', target: '', details: 'Neural pathways optimized - v2.1.4', type: 'system' as const, outcome: 'success' as const },
+    { action: '[SYS] Queue update', target: '', details: 'Target queue refreshed: 847 active', type: 'system' as const, outcome: 'success' as const },
   ];
 
   useEffect(() => {
@@ -39,7 +42,7 @@ export const RealTimeLogs = () => {
     }));
     setLogs(initialLogs);
 
-    // Mock real-time log streaming every 2-5 seconds
+    // Mock real-time log streaming
     const interval = setInterval(() => {
       const template = logTemplates[Math.floor(Math.random() * logTemplates.length)];
       const newLog: LogEntry = {
@@ -47,14 +50,13 @@ export const RealTimeLogs = () => {
         ...template
       };
 
-      setLogs(prev => [...prev.slice(-50), newLog]); // Keep last 50 logs
-    }, Math.random() * 3000 + 2000); // 2-5 second intervals
+      setLogs(prev => [...prev.slice(-50), newLog]);
+    }, Math.random() * 3000 + 2000);
 
     return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
-    // Auto-scroll to bottom
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
@@ -72,22 +74,58 @@ export const RealTimeLogs = () => {
     }
   };
 
+  const getOutcomeIcon = (outcome: string) => {
+    switch (outcome) {
+      case 'success': return '🟢';
+      case 'warning': return '🟡';
+      case 'error': return '🔴';
+      default: return '⚪';
+    }
+  };
+
+  const filteredLogs = logs.filter(log => {
+    if (filter === 'all') return true;
+    if (filter === 'error') return log.outcome === 'error';
+    return log.type === filter;
+  });
+
   return (
     <Card className="bg-black/60 border-red-800/30 text-red-400 backdrop-blur-md shadow-lg shadow-red-500/20 h-full">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-bold tracking-wider flex items-center">
-          <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-3"></span>
-          REAL-TIME INFILTRATION LOGS
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg font-bold tracking-wider flex items-center">
+            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-3"></span>
+            LIVE OPERATIONS LOG
+          </CardTitle>
+          
+          <div className="flex space-x-1">
+            {['all', 'follow', 'dm', 'error'].map((filterType) => (
+              <Button
+                key={filterType}
+                size="sm"
+                variant={filter === filterType ? 'default' : 'outline'}
+                onClick={() => setFilter(filterType as any)}
+                className={`text-xs ${
+                  filter === filterType 
+                    ? 'bg-red-700 text-white' 
+                    : 'bg-black/40 border-red-800/30 text-red-400 hover:bg-red-900/30'
+                }`}
+              >
+                {filterType === 'error' ? '🔴' : ''}{filterType.toUpperCase()}
+              </Button>
+            ))}
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="h-[calc(100%-80px)]">
         <ScrollArea className="h-full">
           <div ref={scrollRef} className="space-y-1 font-mono text-sm">
-            {logs.map((log, index) => (
+            {filteredLogs.map((log, index) => (
               <div key={index} className="flex items-start space-x-3 py-1 animate-fade-in">
                 <span className="text-red-500/70 text-xs w-20 flex-shrink-0">
                   [{log.timestamp}]
                 </span>
+                <span className="text-xs">{getOutcomeIcon(log.outcome)}</span>
                 <div className="flex-1 min-w-0">
                   <span className={getLogColor(log.type)}>
                     {log.action} {log.target && <span className="text-red-300 font-bold">{log.target}</span>}

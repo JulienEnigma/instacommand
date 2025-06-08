@@ -15,6 +15,7 @@ import { TacticalRadar } from "@/components/dashboard/TacticalRadar";
 import { CampaignMode } from "@/components/dashboard/CampaignMode";
 import { ReflexNode } from "@/components/dashboard/ReflexNode";
 import { StanleyInterface } from "@/components/dashboard/StanleyInterface";
+import { InstagramMirror } from "@/components/dashboard/InstagramMirror";
 
 const Dashboard = () => {
   return (
@@ -42,25 +43,26 @@ const Dashboard = () => {
         {/* Scrollable content area */}
         <ScrollArea className="h-[calc(100vh-80px)]">
           <div className="p-6">
-            {/* Responsive grid layout */}
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+            {/* Enhanced responsive grid layout with Instagram Mirror */}
+            <div className="grid grid-cols-1 xl:grid-cols-16 gap-6">
               {/* Left Column - Mission Controls & Stanley (3 cols on xl, full on smaller) */}
-              <div className="xl:col-span-3 space-y-6">
+              <div className="xl:col-span-4 space-y-6">
                 <MissionControls />
                 <StanleyInterface />
                 <ReflexNode />
               </div>
 
               {/* Center Column - Campaign & Logs (6 cols on xl, full on smaller) */}
-              <div className="xl:col-span-6 space-y-6">
+              <div className="xl:col-span-8 space-y-6">
                 <CampaignMode />
                 <div className="h-96">
                   <RealTimeLogs />
                 </div>
               </div>
 
-              {/* Right Column - Command & Tactical (3 cols on xl, full on smaller) */}
-              <div className="xl:col-span-3 space-y-6">
+              {/* Right Column - Instagram Mirror & Tools (4 cols on xl, full on smaller) */}
+              <div className="xl:col-span-4 space-y-6">
+                <InstagramMirror />
                 <CommandInterface />
                 <TacticalRadar />
                 <TargetIntelligence />

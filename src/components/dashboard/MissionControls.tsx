@@ -2,12 +2,31 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, RotateCcw, Trash2, Zap, Crosshair } from 'lucide-react';
+import { Play, Pause, RotateCcw, Trash2, Zap, Crosshair, AlertTriangle } from 'lucide-react';
 import { toast } from "sonner";
 
 export const MissionControls = () => {
-  const executeCommand = (command: string) => {
-    toast.success(`EXECUTING: ${command}`);
+  const executeCommand = (command: string, action: string) => {
+    // Show more specific feedback based on action type
+    switch (action) {
+      case 'start':
+        toast.success(`✅ New sweep initiated - browser automation started`);
+        break;
+      case 'pause':
+        toast.warning(`⏸️ All operations paused - ${new Date().toLocaleTimeString()}`);
+        break;
+      case 'upgrade':
+        toast.info(`🔄 Forcing reflex update - ETA 30 seconds`);
+        break;
+      case 'clear':
+        toast.success(`🗑️ Logs cleared - ${new Date().toLocaleTimeString()}`);
+        break;
+      case 'kill':
+        toast.error(`🛑 Emergency kill triggered - all processes terminated`);
+        break;
+      default:
+        toast.success(`EXECUTING: ${command}`);
+    }
   };
 
   return (
@@ -20,7 +39,7 @@ export const MissionControls = () => {
       </CardHeader>
       <CardContent className="space-y-3">
         <Button 
-          onClick={() => executeCommand('NEW SWEEP INITIATED')}
+          onClick={() => executeCommand('NEW SWEEP INITIATED', 'start')}
           className="w-full bg-red-700 hover:bg-red-600 text-black font-bold transition-all duration-300 hover:shadow-lg hover:shadow-red-500/50"
         >
           <Play className="mr-2 h-4 w-4" />
@@ -28,7 +47,7 @@ export const MissionControls = () => {
         </Button>
         
         <Button 
-          onClick={() => executeCommand('ALL OPS PAUSED')}
+          onClick={() => executeCommand('ALL OPS PAUSED', 'pause')}
           className="w-full bg-yellow-700 hover:bg-yellow-600 text-black font-bold transition-all duration-300 hover:shadow-lg hover:shadow-yellow-500/50"
         >
           <Pause className="mr-2 h-4 w-4" />
@@ -36,15 +55,15 @@ export const MissionControls = () => {
         </Button>
         
         <Button 
-          onClick={() => executeCommand('REFLEX UPGRADE FORCED')}
+          onClick={() => executeCommand('REFLEX UPGRADE FORCED', 'upgrade')}
           className="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/50"
         >
           <Zap className="mr-2 h-4 w-4" />
-          FORCE SELF-UPGRADE
+          FORCE REFLEX UPDATE
         </Button>
         
         <Button 
-          onClick={() => executeCommand('LOGS CLEARED')}
+          onClick={() => executeCommand('LOGS CLEARED', 'clear')}
           className="w-full bg-orange-700 hover:bg-orange-600 text-white font-bold transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/50"
         >
           <Trash2 className="mr-2 h-4 w-4" />
@@ -52,11 +71,11 @@ export const MissionControls = () => {
         </Button>
         
         <Button 
-          onClick={() => executeCommand('EMERGENCY PROTOCOL')}
+          onClick={() => executeCommand('EMERGENCY PROTOCOL', 'kill')}
           className="w-full bg-gray-700 hover:bg-gray-600 text-red-400 font-bold border border-red-800 transition-all duration-300 hover:shadow-lg hover:shadow-red-500/50"
         >
-          <RotateCcw className="mr-2 h-4 w-4" />
-          EMERGENCY STOP
+          <AlertTriangle className="mr-2 h-4 w-4" />
+          KILL PROCESS
         </Button>
       </CardContent>
     </Card>

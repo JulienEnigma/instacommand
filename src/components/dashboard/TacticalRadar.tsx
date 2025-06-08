@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Radar, MapPin } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
+import { Radar, MapPin, Info } from 'lucide-react';
 
 interface RadarBlip {
   id: string;
@@ -10,17 +11,56 @@ interface RadarBlip {
   type: 'new_follower' | 'high_value' | 'lost' | 'active_target';
   intensity: number;
   label: string;
+  timeActive: number; // minutes
+  engagementLevel: number; // 0-100
 }
 
 export const TacticalRadar = () => {
   const [blips, setBlips] = useState<RadarBlip[]>([
-    { id: '1', x: 60, y: 40, type: 'high_value', intensity: 0.9, label: '@filmmaker_jane' },
-    { id: '2', x: 30, y: 70, type: 'new_follower', intensity: 0.7, label: '@photo_mike' },
-    { id: '3', x: 80, y: 20, type: 'active_target', intensity: 0.8, label: '@visual_artist' },
-    { id: '4', x: 45, y: 85, type: 'lost', intensity: 0.3, label: '@urban_explorer' }
+    { 
+      id: '1', 
+      x: 60, 
+      y: 40, 
+      type: 'high_value', 
+      intensity: 0.9, 
+      label: '@filmmaker_jane',
+      timeActive: 45,
+      engagementLevel: 85
+    },
+    { 
+      id: '2', 
+      x: 30, 
+      y: 70, 
+      type: 'new_follower', 
+      intensity: 0.7, 
+      label: '@photo_mike',
+      timeActive: 12,
+      engagementLevel: 60
+    },
+    { 
+      id: '3', 
+      x: 80, 
+      y: 20, 
+      type: 'active_target', 
+      intensity: 0.8, 
+      label: '@visual_artist',
+      timeActive: 120,
+      engagementLevel: 75
+    },
+    { 
+      id: '4', 
+      x: 45, 
+      y: 85, 
+      type: 'lost', 
+      intensity: 0.3, 
+      label: '@urban_explorer',
+      timeActive: 5,
+      engagementLevel: 20
+    }
   ]);
 
   const [sweepAngle, setSweepAngle] = useState(0);
+  const [selectedBlip, setSelectedBlip] = useState<RadarBlip | null>(null);
 
   useEffect(() => {
     // Radar sweep animation
@@ -28,7 +68,7 @@ export const TacticalRadar = () => {
       setSweepAngle(prev => (prev + 2) % 360);
     }, 50);
 
-    // Add new blips occasionally
+    // Update blip positions and add new ones
     const blipInterval = setInterval(() => {
       const types: RadarBlip['type'][] = ['new_follower', 'high_value', 'active_target'];
       const newBlip: RadarBlip = {
@@ -37,7 +77,9 @@ export const TacticalRadar = () => {
         y: Math.random() * 90 + 5,
         type: types[Math.floor(Math.random() * types.length)],
         intensity: Math.random() * 0.5 + 0.5,
-        label: `@target_${Math.floor(Math.random() * 1000)}`
+        label: `@target_${Math.floor(Math.random() * 1000)}`,
+        timeActive: Math.floor(Math.random() * 180),
+        engagementLevel: Math.floor(Math.random() * 100)
       };
 
       setBlips(prev => [...prev.slice(-8), newBlip]);
@@ -59,12 +101,27 @@ export const TacticalRadar = () => {
     }
   };
 
+  const getTypeDescription = (type: RadarBlip['type']) => {
+    switch (type) {
+      case 'new_follower': return 'Recently followed you back';
+      case 'high_value': return 'High engagement potential';
+      case 'lost': return 'Unfollowed or blocked';
+      case 'active_target': return 'Currently being engaged';
+      default: return 'Unknown status';
+    }
+  };
+
   return (
     <Card className="bg-black/60 border-red-800/30 text-red-400 backdrop-blur-md shadow-lg shadow-red-500/20">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-bold tracking-wider flex items-center">
-          <Radar className="mr-2 h-5 w-5 text-red-500" />
-          TACTICAL RADAR
+        <CardTitle className="text-lg font-bold tracking-wider flex items-center justify-between">
+          <div className="flex items-center">
+            <Radar className="mr-2 h-5 w-5 text-red-500" />
+            TACTICAL RADAR
+          </div>
+          <Badge className="bg-red-900/30 text-red-300 border-red-700 text-xs">
+            LIVE
+          </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -91,6 +148,20 @@ export const TacticalRadar = () => {
             <div className="absolute h-full w-px bg-red-800/20 left-1/2 transform -translate-x-1/2" />
           </div>
 
+          {/* Axes labels */}
+          <div className="absolute top-2 left-1/2 transform -translate-x-1/2 text-xs text-gray-500">
+            High Engagement
+          </div>
+          <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 text-xs text-gray-500">
+            Low Engagement
+          </div>
+          <div className="absolute left-2 top-1/2 transform -translate-y-1/2 rotate-90 text-xs text-gray-500">
+            Recent
+          </div>
+          <div className="absolute right-2 top-1/2 transform -translate-y-1/2 -rotate-90 text-xs text-gray-500">
+            Older
+          </div>
+
           {/* Radar sweep */}
           <div 
             className="absolute inset-0"
@@ -104,20 +175,41 @@ export const TacticalRadar = () => {
           {blips.map((blip) => (
             <div
               key={blip.id}
-              className={`absolute w-2 h-2 rounded-full ${getBlipColor(blip.type)} animate-pulse shadow-lg`}
+              className={`absolute w-2 h-2 rounded-full ${getBlipColor(blip.type)} animate-pulse shadow-lg cursor-pointer hover:scale-150 transition-transform`}
               style={{
                 left: `${blip.x}%`,
                 top: `${blip.y}%`,
                 transform: 'translate(-50%, -50%)',
                 opacity: blip.intensity
               }}
-              title={blip.label}
+              onClick={() => setSelectedBlip(blip)}
+              title={`${blip.label} - ${getTypeDescription(blip.type)}`}
             />
           ))}
 
           {/* Center dot */}
           <div className="absolute w-1 h-1 bg-red-500 rounded-full top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
         </div>
+
+        {/* Selected blip details */}
+        {selectedBlip && (
+          <div className="mt-4 p-3 bg-red-950/20 border border-red-800/30 rounded">
+            <div className="flex justify-between items-start mb-2">
+              <span className="font-bold text-red-300">{selectedBlip.label}</span>
+              <button 
+                onClick={() => setSelectedBlip(null)}
+                className="text-gray-500 hover:text-red-400"
+              >
+                ×
+              </button>
+            </div>
+            <div className="text-xs space-y-1">
+              <div>Status: {getTypeDescription(selectedBlip.type)}</div>
+              <div>Active for: {selectedBlip.timeActive}m</div>
+              <div>Engagement Level: {selectedBlip.engagementLevel}%</div>
+            </div>
+          </div>
+        )}
 
         {/* Legend */}
         <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
@@ -135,8 +227,13 @@ export const TacticalRadar = () => {
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-            <span>Lost</span>
+            <span>Lost/Blocked</span>
           </div>
+        </div>
+
+        <div className="mt-3 text-xs text-gray-500 flex items-center">
+          <Info className="h-3 w-3 mr-1" />
+          X-axis: Time active, Y-axis: Engagement level
         </div>
       </CardContent>
     </Card>

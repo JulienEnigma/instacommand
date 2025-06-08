@@ -1,45 +1,79 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Zap, AlertTriangle } from 'lucide-react';
+import { Brain, TrendingUp, AlertCircle, Target } from 'lucide-react';
 
 interface StanleyMessage {
-  type: 'status' | 'warning' | 'insight' | 'decision';
+  type: 'analysis' | 'alert' | 'recommendation' | 'status';
   message: string;
   timestamp: string;
   priority: 'low' | 'medium' | 'high';
+  data?: string;
 }
 
 export const StanleyInterface = () => {
   const [messages, setMessages] = useState<StanleyMessage[]>([
     {
       type: 'status',
-      message: 'Neural pathways optimized. Ready for operations.',
+      message: 'System optimized. Ready for operations.',
       timestamp: '14:32:18',
-      priority: 'medium'
+      priority: 'medium',
+      data: 'Uptime: 4h 23m'
     },
     {
-      type: 'insight',
-      message: 'Detecting higher engagement from visual artists 18:00-22:00.',
+      type: 'recommendation',
+      message: 'Higher engagement detected 18:00-22:00 for visual artists.',
       timestamp: '14:30:12',
-      priority: 'high'
+      priority: 'high',
+      data: '+34% response rate'
     }
   ]);
 
-  const stanleyThoughts: Omit<StanleyMessage, 'timestamp'>[] = [
-    { type: 'warning' as const, message: 'Engagement levels dropping. Switching to fallback strategy.', priority: 'high' as const },
-    { type: 'insight' as const, message: 'Optimal targeting window detected for film community.', priority: 'medium' as const },
-    { type: 'decision' as const, message: 'Adjusting comment patterns for higher authenticity.', priority: 'medium' as const },
-    { type: 'status' as const, message: 'Processing 847 new potential targets from hashtag sweep.', priority: 'low' as const },
-    { type: 'warning' as const, message: 'Rate limit approaching. Implementing cool-down protocol.', priority: 'high' as const },
-    { type: 'insight' as const, message: 'User behavioral pattern suggests peak activity in 2 hours.', priority: 'medium' as const }
+  const stanleyInsights: Omit<StanleyMessage, 'timestamp'>[] = [
+    { 
+      type: 'alert', 
+      message: 'Engagement rate dropping. Switching to backup strategy.', 
+      priority: 'high',
+      data: '-12% last hour'
+    },
+    { 
+      type: 'recommendation', 
+      message: 'Optimal targeting window detected for film community.', 
+      priority: 'medium',
+      data: '847 active users'
+    },
+    { 
+      type: 'analysis', 
+      message: 'Comment patterns adjusted for higher authenticity score.', 
+      priority: 'medium',
+      data: '+8.5% effectiveness'
+    },
+    { 
+      type: 'status', 
+      message: 'Processing 847 new targets from hashtag analysis.', 
+      priority: 'low',
+      data: 'Queue: 847 pending'
+    },
+    { 
+      type: 'alert', 
+      message: 'Rate limit approaching. Implementing cooldown at 14:45.', 
+      priority: 'high',
+      data: '85% capacity'
+    },
+    { 
+      type: 'recommendation', 
+      message: '@filmfest.mythos follows 2 of your targets. Coordinated timing suggested.', 
+      priority: 'medium',
+      data: 'Mutual connections: 2'
+    }
   ];
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const thought = stanleyThoughts[Math.floor(Math.random() * stanleyThoughts.length)];
+      const insight = stanleyInsights[Math.floor(Math.random() * stanleyInsights.length)];
       const newMessage: StanleyMessage = {
-        ...thought,
+        ...insight,
         timestamp: new Date().toLocaleTimeString('en-US', { hour12: false })
       };
 
@@ -59,9 +93,9 @@ export const StanleyInterface = () => {
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'warning': return <AlertTriangle className="h-3 w-3" />;
-      case 'insight': return <Brain className="h-3 w-3" />;
-      case 'decision': return <Zap className="h-3 w-3" />;
+      case 'alert': return <AlertCircle className="h-3 w-3" />;
+      case 'recommendation': return <TrendingUp className="h-3 w-3" />;
+      case 'analysis': return <Target className="h-3 w-3" />;
       default: return <Brain className="h-3 w-3" />;
     }
   };
@@ -71,7 +105,7 @@ export const StanleyInterface = () => {
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-bold tracking-wider flex items-center">
           <Brain className="mr-2 h-5 w-5 text-red-500 animate-pulse" />
-          STANLEY NEURAL INTERFACE
+          STANLEY AI
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -89,9 +123,14 @@ export const StanleyInterface = () => {
               </div>
               <span className="text-xs text-gray-500">{msg.timestamp}</span>
             </div>
-            <div className="text-sm font-mono leading-relaxed">
-              [Stanley] {msg.message}
+            <div className="text-sm leading-relaxed mb-1">
+              {msg.message}
             </div>
+            {msg.data && (
+              <div className="text-xs font-mono text-gray-400 mt-2 p-2 bg-black/40 rounded">
+                {msg.data}
+              </div>
+            )}
           </div>
         ))}
       </CardContent>
