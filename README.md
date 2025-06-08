@@ -1,73 +1,273 @@
-# Welcome to your Lovable project
+# Social Commander - AI-Powered Instagram Automation Platform
 
-## Project info
+A full-stack Instagram automation platform with local LLM integration, built with FastAPI backend and React frontend.
 
-**URL**: https://lovable.dev/projects/b37a480d-8291-449c-b5c2-ab935671103d
+## 🚀 Features
 
-## How can I edit this code?
+- **Instagram Automation**: Hashtag scanning, following, DMs, and comments using Playwright
+- **Local LLM Integration**: Stanley AI powered by transformers for command analysis and insights
+- **Real-time Dashboard**: Live logs, metrics, and Instagram mirror with WebSocket updates
+- **Queue Management**: Rate-limited operations to prevent Instagram blocking
+- **RunPod Ready**: Containerized deployment for cloud hosting
 
-There are several ways of editing your application.
+## 📋 Prerequisites
 
-**Use Lovable**
+- Python 3.11+
+- Node.js 18+
+- Docker & Docker Compose
+- Instagram account credentials
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/b37a480d-8291-449c-b5c2-ab935671103d) and start prompting.
+## 🛠️ Local Development Setup
 
-Changes made via Lovable will be committed automatically to this repo.
+### 1. Clone Repository
+```bash
+git clone https://github.com/JulienEnigma/instacommand.git
+cd instacommand
+```
 
-**Use your preferred IDE**
+### 2. Backend Setup
+```bash
+cd backend
+pip install -r requirements.txt
+playwright install chromium
+python main.py
+```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+### 3. Frontend Setup
+```bash
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### 4. Access Application
+- Frontend: http://localhost:8080
+- Backend API: http://localhost:8000
+- API Docs: http://localhost:8000/docs
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 🐳 Docker Deployment
 
-**Use GitHub Codespaces**
+### Local Docker
+```bash
+docker-compose up --build
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Production with Nginx
+```bash
+docker-compose --profile production up --build
+```
 
-## What technologies are used for this project?
+## ☁️ RunPod Deployment
 
-This project is built with:
+### Quick Setup
+1. Create RunPod instance with the "Instagram" pod
+2. Upload project files to `/workspace/instacommand`
+3. Run setup script:
+```bash
+chmod +x runpod-setup.sh
+./runpod-setup.sh
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Manual RunPod Setup
+```bash
+# Install dependencies
+apt-get update && apt-get install -y docker.io docker-compose
 
-## How can I deploy this project?
+# Clone and build
+git clone https://github.com/JulienEnigma/instacommand.git
+cd instacommand
+docker-compose build
 
-Simply open [Lovable](https://lovable.dev/projects/b37a480d-8291-449c-b5c2-ab935671103d) and click on Share -> Publish.
+# Configure environment
+cp .env.example .env
+# Edit .env with your Instagram credentials
 
-## Can I connect a custom domain to my Lovable project?
+# Start services
+docker-compose up -d
+```
 
-Yes, you can!
+### RunPod Environment Variables
+```bash
+API_HOST=0.0.0.0
+API_PORT=8000
+DATABASE_URL=sqlite:///workspace/data/social_commander.db
+LLM_MODEL_NAME=microsoft/DialoGPT-medium
+INSTAGRAM_USERNAME=your_username
+INSTAGRAM_PASSWORD=your_password
+DEBUG=false
+```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 🔧 Configuration
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+### Instagram Credentials
+Set your Instagram login credentials in the environment variables or through the web interface:
+- `INSTAGRAM_USERNAME`: Your Instagram username
+- `INSTAGRAM_PASSWORD`: Your Instagram password
+
+### LLM Model Selection
+Choose from supported models:
+- `microsoft/DialoGPT-medium` (default, lightweight)
+- `microsoft/DialoGPT-large` (better quality, more resources)
+- `facebook/blenderbot-400M-distill` (alternative option)
+
+### Rate Limiting
+Configure operation delays in `backend/config/settings.py`:
+- `FOLLOW_DELAY`: Seconds between follow operations (default: 60)
+- `DM_DELAY`: Seconds between DM operations (default: 120)
+- `SCAN_DELAY`: Seconds between scan operations (default: 30)
+
+## 📊 API Endpoints
+
+### Authentication
+- `POST /auth/login` - Instagram login
+- `GET /auth/status` - Check login status
+- `POST /auth/logout` - Logout
+
+### Instagram Operations
+- `POST /instagram/scan` - Scan hashtag for targets
+- `POST /instagram/follow` - Follow user
+- `POST /instagram/dm` - Send direct message
+- `POST /instagram/comment` - Add comment to post
+- `GET /instagram/profile/stats` - Get profile statistics
+- `GET /instagram/mirror/screenshot` - Get Instagram screenshot
+
+### LLM & Stanley AI
+- `POST /llm/generate` - Generate text with LLM
+- `POST /llm/stanley/insight` - Get Stanley AI insights
+- `POST /llm/stanley/recommendation` - Get recommendations
+
+### Logs & Monitoring
+- `GET /logs/` - Get recent logs
+- `WebSocket /logs/stream` - Real-time log streaming
+- `GET /status/` - System status
+- `GET /health` - Health check
+
+## 🎯 Usage Guide
+
+### 1. Login to Instagram
+Use the authentication interface or API to login with your Instagram credentials.
+
+### 2. Start Operations
+- **Scan**: `scan #photography` - Find targets in hashtag
+- **Follow**: `follow @username` - Follow specific user
+- **DM**: `dm @username "Hello!"` - Send direct message
+- **Pause**: `pause ops` - Pause all operations
+
+### 3. Monitor Activity
+- View real-time logs in the dashboard
+- Check Instagram mirror for profile updates
+- Monitor Stanley AI insights and recommendations
+
+### 4. Export Data
+- Export logs as JSON/CSV
+- Download Instagram mirror data
+- View performance metrics
+
+## 🔒 Security & Best Practices
+
+### Rate Limiting
+- Built-in delays prevent Instagram rate limiting
+- Queue system manages operation timing
+- Automatic retry logic for failed operations
+
+### Data Privacy
+- All data stored locally (SQLite database)
+- No external API calls except Instagram
+- Logs can be cleared anytime
+
+### Instagram Safety
+- Mimics human behavior patterns
+- Randomized delays between actions
+- Respects Instagram's terms of service
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+**Backend won't start:**
+```bash
+# Check Python dependencies
+pip install -r backend/requirements.txt
+
+# Install Playwright browsers
+playwright install chromium
+```
+
+**Frontend connection errors:**
+```bash
+# Verify backend is running
+curl http://localhost:8000/health
+
+# Check CORS settings in main.py
+```
+
+**Instagram login fails:**
+```bash
+# Verify credentials in environment
+echo $INSTAGRAM_USERNAME
+
+# Check for 2FA requirements
+# Use app-specific password if needed
+```
+
+**LLM model loading errors:**
+```bash
+# Clear model cache
+rm -rf ~/.cache/huggingface/
+
+# Try smaller model
+export LLM_MODEL_NAME=microsoft/DialoGPT-medium
+```
+
+### Logs & Debugging
+- Backend logs: `/tmp/social_commander.log`
+- Frontend logs: Browser developer console
+- Docker logs: `docker-compose logs -f`
+
+## 📁 Project Structure
+
+```
+instacommand/
+├── backend/                 # FastAPI backend
+│   ├── config/             # Configuration settings
+│   ├── database/           # SQLite database management
+│   ├── models/             # Pydantic data models
+│   ├── routes/             # API route handlers
+│   ├── services/           # Business logic services
+│   └── main.py             # Application entry point
+├── src/                    # React frontend
+│   ├── components/         # UI components
+│   ├── lib/                # API client and utilities
+│   └── pages/              # Application pages
+├── Dockerfile              # Container configuration
+├── docker-compose.yml      # Multi-service orchestration
+├── runpod-setup.sh         # RunPod deployment script
+└── README.md               # This file
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create feature branch: `git checkout -b feature/amazing-feature`
+3. Commit changes: `git commit -m 'Add amazing feature'`
+4. Push to branch: `git push origin feature/amazing-feature`
+5. Open Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## ⚠️ Disclaimer
+
+This tool is for educational and research purposes. Users are responsible for complying with Instagram's Terms of Service and applicable laws. Use responsibly and respect rate limits to avoid account restrictions.
+
+## 🆘 Support
+
+For issues and questions:
+1. Check the troubleshooting section above
+2. Review GitHub issues
+3. Create new issue with detailed description
+4. Include logs and error messages
+
+---
+
+**Built with ❤️ by Enigma Releasing**

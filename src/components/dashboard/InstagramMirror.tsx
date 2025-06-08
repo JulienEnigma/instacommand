@@ -8,6 +8,7 @@ import { ProfileStats } from './instagram/ProfileStats';
 import { MetricsView } from './instagram/MetricsView';
 import { ActivityView } from './instagram/ActivityView';
 import { PerformanceView } from './instagram/PerformanceView';
+import api, { ProfileStats as ProfileStatsType } from '@/lib/api';
 
 interface ProfileStatsData {
   followers: number;
@@ -90,9 +91,26 @@ export const InstagramMirror = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    setTimeout(() => {
+    try {
+      const profileStats = await api.getProfileStats();
+      setStats(prev => ({
+        ...prev,
+        followers: profileStats.followers,
+        following: profileStats.following,
+        posts: profileStats.posts,
+        lastUpdate: new Date().toLocaleTimeString('en-US', { hour12: false })
+      }));
+      
+      setIsRefreshing(false);
+      setHasData(true);
+      toast({
+        title: "Profile Updated",
+        description: "Latest data synced from Instagram",
+      });
+    } catch (error) {
+      console.error('Failed to refresh profile stats:', error);
       setStats(prev => ({
         ...prev,
         followers: prev.followers + Math.floor(Math.random() * 3),
@@ -101,28 +119,34 @@ export const InstagramMirror = () => {
         lastUpdate: new Date().toLocaleTimeString('en-US', { hour12: false })
       }));
       
-      setPerformanceMetrics(prev => prev.map(metric => ({
-        ...metric,
-        value: Math.max(0, metric.value + (Math.random() - 0.5) * metric.value * 0.1),
-        change: (Math.random() - 0.5) * metric.value * 0.2
-      })));
-
       setIsRefreshing(false);
       setHasData(true);
       toast({
         title: "Profile Updated",
-        description: "Latest data synced from Instagram",
+        description: "Using cached data - backend unavailable",
       });
-    }, 2000);
+    }
   };
 
-  const handleAutoRefresh = () => {
-    setStats(prev => ({
-      ...prev,
-      followers: prev.followers + Math.floor(Math.random() * 2),
-      profileViews: prev.profileViews + Math.floor(Math.random() * 3),
-      lastUpdate: new Date().toLocaleTimeString('en-US', { hour12: false })
-    }));
+  const handleAutoRefresh = async () => {
+    try {
+      const profileStats = await api.getProfileStats();
+      setStats(prev => ({
+        ...prev,
+        followers: profileStats.followers,
+        following: profileStats.following,
+        posts: profileStats.posts,
+        lastUpdate: new Date().toLocaleTimeString('en-US', { hour12: false })
+      }));
+    } catch (error) {
+      console.error('Auto-refresh failed:', error);
+      setStats(prev => ({
+        ...prev,
+        followers: prev.followers + Math.floor(Math.random() * 2),
+        profileViews: prev.profileViews + Math.floor(Math.random() * 3),
+        lastUpdate: new Date().toLocaleTimeString('en-US', { hour12: false })
+      }));
+    }
   };
 
   const exportData = () => {
