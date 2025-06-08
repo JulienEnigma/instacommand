@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, RotateCcw, Trash2, Zap } from 'lucide-react';
+import { Play, Pause, RotateCcw, Trash2, Zap, Crosshair } from 'lucide-react';
 import { toast } from "sonner";
 
 export const MissionControls = () => {
@@ -11,14 +11,17 @@ export const MissionControls = () => {
   };
 
   return (
-    <Card className="bg-gray-900 border-green-800 text-green-400">
+    <Card className="bg-black/60 border-red-800/30 text-red-400 backdrop-blur-md shadow-lg shadow-red-500/20">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-bold tracking-wider">MISSION CONTROLS</CardTitle>
+        <CardTitle className="text-lg font-bold tracking-wider flex items-center">
+          <Crosshair className="mr-2 h-5 w-5 text-red-500" />
+          MISSION CONTROLS
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <Button 
           onClick={() => executeCommand('NEW SWEEP INITIATED')}
-          className="w-full bg-green-700 hover:bg-green-600 text-black font-bold"
+          className="w-full bg-red-700 hover:bg-red-600 text-black font-bold transition-all duration-300 hover:shadow-lg hover:shadow-red-500/50"
         >
           <Play className="mr-2 h-4 w-4" />
           START NEW SWEEP
@@ -26,7 +29,7 @@ export const MissionControls = () => {
         
         <Button 
           onClick={() => executeCommand('ALL OPS PAUSED')}
-          className="w-full bg-yellow-700 hover:bg-yellow-600 text-black font-bold"
+          className="w-full bg-yellow-700 hover:bg-yellow-600 text-black font-bold transition-all duration-300 hover:shadow-lg hover:shadow-yellow-500/50"
         >
           <Pause className="mr-2 h-4 w-4" />
           PAUSE ALL OPS
@@ -34,7 +37,7 @@ export const MissionControls = () => {
         
         <Button 
           onClick={() => executeCommand('REFLEX UPGRADE FORCED')}
-          className="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold"
+          className="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/50"
         >
           <Zap className="mr-2 h-4 w-4" />
           FORCE SELF-UPGRADE
@@ -42,7 +45,7 @@ export const MissionControls = () => {
         
         <Button 
           onClick={() => executeCommand('LOGS CLEARED')}
-          className="w-full bg-red-700 hover:bg-red-600 text-white font-bold"
+          className="w-full bg-orange-700 hover:bg-orange-600 text-white font-bold transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/50"
         >
           <Trash2 className="mr-2 h-4 w-4" />
           CLEAR LOGS
@@ -50,7 +53,7 @@ export const MissionControls = () => {
         
         <Button 
           onClick={() => executeCommand('EMERGENCY PROTOCOL')}
-          className="w-full bg-gray-700 hover:bg-gray-600 text-red-400 font-bold border border-red-800"
+          className="w-full bg-gray-700 hover:bg-gray-600 text-red-400 font-bold border border-red-800 transition-all duration-300 hover:shadow-lg hover:shadow-red-500/50"
         >
           <RotateCcw className="mr-2 h-4 w-4" />
           EMERGENCY STOP

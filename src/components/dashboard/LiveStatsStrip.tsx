@@ -6,6 +6,7 @@ interface Stats {
   newFollowersToday: number;
   dmsSent: number;
   lastReflexUpdate: string;
+  stanleyStatus: string;
 }
 
 export const LiveStatsStrip = () => {
@@ -13,7 +14,8 @@ export const LiveStatsStrip = () => {
     currentTargets: 31,
     newFollowersToday: 12,
     dmsSent: 4,
-    lastReflexUpdate: '6h ago'
+    lastReflexUpdate: '6h ago',
+    stanleyStatus: 'ACTIVE'
   });
 
   useEffect(() => {
@@ -33,20 +35,20 @@ export const LiveStatsStrip = () => {
   return (
     <div className="flex items-center space-x-8 text-sm">
       <div className="flex items-center space-x-2">
-        <span className="text-gray-400">TARGETS:</span>
-        <span className="text-green-300 font-bold">{stats.currentTargets}</span>
+        <span className="text-red-500/70">TARGETS:</span>
+        <span className="text-red-300 font-bold font-mono">{stats.currentTargets}</span>
       </div>
       <div className="flex items-center space-x-2">
-        <span className="text-gray-400">NEW FOLLOWERS:</span>
-        <span className="text-green-300 font-bold">{stats.newFollowersToday}</span>
+        <span className="text-red-500/70">NEW FOLLOWERS:</span>
+        <span className="text-red-300 font-bold font-mono">{stats.newFollowersToday}</span>
       </div>
       <div className="flex items-center space-x-2">
-        <span className="text-gray-400">DMS SENT:</span>
-        <span className="text-green-300 font-bold">{stats.dmsSent}</span>
+        <span className="text-red-500/70">DMS SENT:</span>
+        <span className="text-red-300 font-bold font-mono">{stats.dmsSent}</span>
       </div>
       <div className="flex items-center space-x-2">
-        <span className="text-gray-400">REFLEX:</span>
-        <span className="text-yellow-400 font-bold">{stats.lastReflexUpdate}</span>
+        <span className="text-red-500/70">STANLEY:</span>
+        <span className="text-green-400 font-bold font-mono animate-pulse">{stats.stanleyStatus}</span>
       </div>
     </div>
   );

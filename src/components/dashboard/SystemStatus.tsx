@@ -20,13 +20,13 @@ export const SystemStatus = () => {
     switch (status) {
       case 'online':
         return {
-          color: 'bg-green-500',
+          color: 'bg-red-500',
           text: 'OPS RUNNING',
           pulse: true
         };
       case 'offline':
         return {
-          color: 'bg-red-500',
+          color: 'bg-gray-500',
           text: 'OFFLINE',
           pulse: false
         };
@@ -44,10 +44,10 @@ export const SystemStatus = () => {
   return (
     <div className="flex items-center space-x-3">
       <div className="flex items-center space-x-2">
-        <div className={`w-3 h-3 rounded-full ${config.color} ${config.pulse ? 'animate-pulse' : ''}`}></div>
-        <span className="text-xs font-bold tracking-wider">{config.text}</span>
+        <div className={`w-3 h-3 rounded-full ${config.color} ${config.pulse ? 'animate-pulse' : ''} shadow-lg`}></div>
+        <span className="text-xs font-bold tracking-wider text-red-300">{config.text}</span>
       </div>
-      <div className="text-xs text-gray-400">
+      <div className="text-xs text-red-500/70 font-mono">
         {new Date().toLocaleTimeString('en-US', { hour12: false })}
       </div>
     </div>
