@@ -44,38 +44,38 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Main dashboard content - no scroll area */}
+        {/* Main dashboard content - restructured for full height */}
         <div className="flex-1 p-4 overflow-hidden">
-          {/* Compact 2-row grid layout */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 h-full auto-rows-fr">
-            {/* Row 1 */}
-            <div className="h-[280px] overflow-auto">
+          {/* Grid with 2 equal height rows */}
+          <div className="h-full grid grid-rows-2 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {/* Row 1 - spans full height of first row */}
+            <div className="h-full">
               <MissionControls />
             </div>
-            <div className="h-[280px] overflow-auto">
+            <div className="h-full">
               <CampaignMode />
             </div>
-            <div className="h-[280px] overflow-auto">
+            <div className="h-full">
               <InstagramMirror />
             </div>
-            <div className="h-[280px] overflow-auto">
+            <div className="h-full">
               <StanleyInterface />
             </div>
 
-            {/* Row 2 */}
-            <div className="h-[280px] overflow-auto">
+            {/* Row 2 - spans full height of second row */}
+            <div className="h-full">
               <RealTimeLogs />
             </div>
-            <div className="h-[280px] overflow-auto">
+            <div className="h-full">
               <CommandInterface />
             </div>
-            <div className="h-[280px] overflow-auto">
+            <div className="h-full">
               <ReflexNode />
             </div>
-            <div className="h-[280px] overflow-auto lg:col-span-2 xl:col-span-1">
+            <div className="h-full lg:col-span-2 xl:col-span-1">
               <TacticalRadar />
             </div>
-            <div className="h-[280px] overflow-auto lg:col-start-1 xl:col-start-auto">
+            <div className="h-full lg:col-start-1 xl:col-start-auto">
               <TargetIntelligence />
             </div>
           </div>
