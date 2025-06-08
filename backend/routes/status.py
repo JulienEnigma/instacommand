@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends
 from typing import Dict, Any
-from services.instagram_service import InstagramService
-from services.queue_service import QueueService
-from services.llm_service import LLMService
-from database.sqlite_db import DatabaseManager
+from backend.services.instagram_service import InstagramService
+from backend.services.queue_service import QueueService
+from backend.services.llm_service import LLMService
+from backend.database.sqlite_db import DatabaseManager
 from datetime import datetime
 
 router = APIRouter(prefix="/status", tags=["status"])

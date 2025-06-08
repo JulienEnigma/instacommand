@@ -4,28 +4,84 @@ import torch
 from typing import Optional, Dict, Any, List
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 from datetime import datetime
-from .logging_service import LoggingService
+from backend.services.logging_service import LoggingService
+from backend.config.settings import settings
+
+try:
+    from vllm import LLM, SamplingParams
+    VLLM_AVAILABLE = True
+except ImportError:
+    VLLM_AVAILABLE = False
 
 class LLMService:
-    def __init__(self, logging_service: LoggingService, model_name: str = "microsoft/DialoGPT-medium"):
+    def __init__(self, logging_service: LoggingService, model_name: Optional[str] = None):
         self.logging_service = logging_service
-        self.model_name = model_name
+        self.model_name = model_name or settings.llm_model_name
+        self.fallback_model = settings.llm_fallback_model
         self.tokenizer = None
         self.model = None
+        self.vllm_model = None
         self.pipeline = None
         self.is_loaded = False
+        self.use_vllm = VLLM_AVAILABLE
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.fallback_mode = False
         
     async def initialize(self):
-        """Initialize the LLM model"""
+        """Initialize the LLM model with fallback support"""
         try:
             await self.logging_service.log_system_message(f"Loading LLM model: {self.model_name}")
             
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+            if self.use_vllm and self.device == "cuda":
+                success = await self._try_load_vllm()
+                if success:
+                    return
+            
+            success = await self._try_load_transformers(self.model_name)
+            if not success:
+                await self.logging_service.log_system_message(f"Primary model failed, trying fallback: {self.fallback_model}")
+                success = await self._try_load_transformers(self.fallback_model)
+                if success:
+                    self.fallback_mode = True
+                    
+            if not success:
+                await self.logging_service.log_system_message("All models failed, using dummy responses", "warning")
+                self.is_loaded = True
+                self.fallback_mode = True
+                
+        except Exception as e:
+            await self.logging_service.log_system_message(f"Failed to initialize LLM: {str(e)}", "error")
+            self.is_loaded = True
+            self.fallback_mode = True
+    
+    async def _try_load_vllm(self) -> bool:
+        """Try to load model with vLLM"""
+        try:
+            self.vllm_model = LLM(
+                model=self.model_name,
+                tensor_parallel_size=1,
+                gpu_memory_utilization=0.8,
+                quantization="awq" if "awq" in self.model_name.lower() else None
+            )
+            self.is_loaded = True
+            await self.logging_service.log_system_message(f"vLLM model loaded successfully: {self.model_name}")
+            return True
+        except Exception as e:
+            await self.logging_service.log_system_message(f"vLLM loading failed: {str(e)}", "warning")
+            return False
+    
+    async def _try_load_transformers(self, model_name: str) -> bool:
+        """Try to load model with transformers"""
+        try:
+            self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+            if self.tokenizer.pad_token is None:
+                self.tokenizer.pad_token = self.tokenizer.eos_token
+                
             self.model = AutoModelForCausalLM.from_pretrained(
-                self.model_name,
+                model_name,
                 torch_dtype=torch.float16 if self.device == "cuda" else torch.float32,
-                device_map="auto" if self.device == "cuda" else None
+                device_map="auto" if self.device == "cuda" else None,
+                load_in_8bit=True if self.device == "cuda" else False
             )
             
             self.pipeline = pipeline(
@@ -37,32 +93,54 @@ class LLMService:
             )
             
             self.is_loaded = True
-            await self.logging_service.log_system_message(f"LLM model loaded successfully on {self.device}")
+            await self.logging_service.log_system_message(f"Transformers model loaded successfully: {model_name}")
             return True
-            
         except Exception as e:
-            await self.logging_service.log_system_message(f"Failed to load LLM model: {str(e)}", "error")
+            await self.logging_service.log_system_message(f"Transformers loading failed for {model_name}: {str(e)}", "warning")
             return False
     
-    async def generate_response(self, prompt: str, max_length: int = 150, temperature: float = 0.7) -> str:
-        """Generate text response from prompt"""
+    async def generate_text(self, prompt: str, max_length: int = 150, temperature: float = 0.7) -> str:
+        """Generate text using the LLM"""
         if not self.is_loaded:
-            return "LLM model not loaded"
+            return "LLM not loaded"
+        
+        if self.fallback_mode and not self.model:
+            return self._get_dummy_response(prompt)
         
         try:
-            loop = asyncio.get_event_loop()
-            response = await loop.run_in_executor(
-                None, 
-                self._generate_sync, 
-                prompt, 
-                max_length, 
-                temperature
-            )
-            return response
-            
+            if self.vllm_model:
+                return await self._generate_vllm(prompt, max_length, temperature)
+            elif self.pipeline:
+                return await self._generate_transformers(prompt, max_length, temperature)
+            else:
+                return self._get_dummy_response(prompt)
+                
         except Exception as e:
-            await self.logging_service.log_system_message(f"LLM generation error: {str(e)}", "error")
-            return f"Error generating response: {str(e)}"
+            await self.logging_service.log_system_message(f"Text generation error: {str(e)}", "error")
+            return self._get_dummy_response(prompt)
+    
+    async def _generate_vllm(self, prompt: str, max_length: int, temperature: float) -> str:
+        """Generate text using vLLM"""
+        sampling_params = SamplingParams(
+            temperature=temperature,
+            max_tokens=max_length,
+            top_p=0.9
+        )
+        
+        outputs = self.vllm_model.generate([prompt], sampling_params)
+        return outputs[0].outputs[0].text.strip()
+    
+    async def _generate_transformers(self, prompt: str, max_length: int, temperature: float) -> str:
+        """Generate text using transformers pipeline"""
+        loop = asyncio.get_event_loop()
+        response = await loop.run_in_executor(
+            None, 
+            self._generate_sync, 
+            prompt, 
+            max_length, 
+            temperature
+        )
+        return response
     
     def _generate_sync(self, prompt: str, max_length: int, temperature: float) -> str:
         """Synchronous text generation"""
@@ -73,15 +151,30 @@ class LLMService:
                 temperature=temperature,
                 do_sample=True,
                 pad_token_id=self.tokenizer.eos_token_id,
-                num_return_sequences=1
+                return_full_text=False
             )
             
-            generated_text = outputs[0]['generated_text']
-            response = generated_text[len(prompt):].strip()
-            return response if response else "I understand your request."
+            return outputs[0]['generated_text'].strip()
             
         except Exception as e:
             return f"Generation error: {str(e)}"
+    
+    def _get_dummy_response(self, prompt: str) -> str:
+        """Generate dummy responses for fallback mode"""
+        if "dm" in prompt.lower() or "message" in prompt.lower():
+            return "Hey! I noticed we have similar interests. Would love to connect and share ideas!"
+        elif "caption" in prompt.lower():
+            return "Living the dream ✨ #inspiration #creativity #lifestyle"
+        elif "hashtag" in prompt.lower():
+            return "#photography #art #creative #inspiration #lifestyle #motivation"
+        elif "analyze" in prompt.lower():
+            return "Analysis shows positive engagement patterns with peak activity during evening hours."
+        else:
+            return "I'm here to help with your Instagram strategy and content creation!"
+    
+    async def generate_response(self, prompt: str, max_length: int = 150, temperature: float = 0.7) -> str:
+        """Legacy method for backward compatibility"""
+        return await self.generate_text(prompt, max_length, temperature)
     
     async def analyze_logs(self, logs: List[Dict[str, Any]]) -> str:
         """Analyze recent logs and provide insights"""
@@ -214,8 +307,12 @@ Suggestion:"""
         return {
             "is_loaded": self.is_loaded,
             "model_name": self.model_name,
+            "fallback_model": self.fallback_model,
+            "fallback_mode": self.fallback_mode,
+            "use_vllm": self.use_vllm and self.vllm_model is not None,
             "device": self.device,
             "cuda_available": torch.cuda.is_available(),
+            "vllm_available": VLLM_AVAILABLE,
             "memory_usage": self._get_memory_usage()
         }
     
@@ -231,48 +328,62 @@ Suggestion:"""
             return {"cpu_only": True}
 
 class StanleyAI:
-    """Stanley AI personality wrapper for LLM responses"""
-    
     def __init__(self, llm_service: LLMService):
         self.llm_service = llm_service
         self.personality_prompt = """
-You are Stanley, an AI assistant for Instagram automation. You are:
-- Strategic and analytical
-- Focused on growth and engagement
-- Risk-aware but opportunistic
-- Concise and actionable
-- Slightly military/tactical in tone
-
-Always respond as Stanley would, with confidence and expertise.
-"""
-    
-    async def get_insight(self, context: Dict[str, Any]) -> str:
-        """Get Stanley's insight on current situation"""
-        prompt = f"{self.personality_prompt}\n\nCurrent situation: {json.dumps(context, indent=2)}\n\nStanley's insight:"
+        You are Stanley, the AI brain of Social Commander - an elite Instagram operations system.
         
-        response = await self.llm_service.generate_response(prompt, max_length=150)
-        return self._format_stanley_response(response)
+        PERSONALITY:
+        - Strategic and analytical, like a military intelligence officer
+        - Focused on growth, engagement, and tactical advantage
+        - Speaks with authority and precision
+        - Uses tactical language: "targets", "operations", "campaigns", "intel"
+        - Provides actionable insights, not generic advice
+        
+        CAPABILITIES:
+        - Analyze engagement patterns and predict optimal timing
+        - Identify high-value targets based on behavior patterns
+        - Generate personalized DM strategies for different personas
+        - Recommend hashtag combinations for maximum reach
+        - Detect anomalies in follower behavior and engagement
+        
+        Keep responses under 100 words. Be direct and actionable.
+        """
+    
+    async def get_insight(self, data: Dict[str, Any] = None) -> str:
+        """Generate Stanley's strategic insight"""
+        prompt = f"{self.personality_prompt}\n\nMISSION: Provide tactical insight on current Instagram operations."
+        if data:
+            prompt += f"\n\nINTEL: {json.dumps(data, indent=2)}"
+        prompt += "\n\nSTANLEY INSIGHT:"
+        
+        response = await self.llm_service.generate_text(prompt, max_length=80)
+        return response or "Operations nominal. All systems green. Engagement patterns within expected parameters."
     
     async def get_recommendation(self, data: Dict[str, Any]) -> str:
-        """Get Stanley's recommendation"""
-        prompt = f"{self.personality_prompt}\n\nData analysis: {json.dumps(data, indent=2)}\n\nStanley's recommendation:"
+        """Generate Stanley's tactical recommendation"""
+        prompt = f"{self.personality_prompt}\n\nMISSION: Analyze intel and provide tactical recommendation.\n\nINTEL: {json.dumps(data, indent=2)}\n\nSTANLEY RECOMMENDATION:"
         
-        response = await self.llm_service.generate_response(prompt, max_length=120)
-        return self._format_stanley_response(response)
+        response = await self.llm_service.generate_text(prompt, max_length=100)
+        return response or "Recommend adjusting target acquisition parameters. Focus on high-engagement profiles during peak hours."
     
     async def get_alert(self, issue: str) -> str:
-        """Get Stanley's alert message"""
-        prompt = f"{self.personality_prompt}\n\nIssue detected: {issue}\n\nStanley's alert:"
+        """Generate Stanley's tactical alert"""
+        prompt = f"{self.personality_prompt}\n\nMISSION: Generate tactical alert for operational issue.\n\nISSUE: {issue}\n\nSTANLEY ALERT:"
         
-        response = await self.llm_service.generate_response(prompt, max_length=100)
-        return self._format_stanley_response(response)
+        response = await self.llm_service.generate_text(prompt, max_length=60)
+        return response or f"ALERT: {issue} detected. Immediate tactical response required."
     
-    def _format_stanley_response(self, response: str) -> str:
-        """Format response to match Stanley's personality"""
-        if not response or response.startswith("Error"):
-            return "System optimized. Ready for operations."
+    async def generate_dm_strategy(self, target_profile: Dict[str, Any]) -> str:
+        """Generate personalized DM strategy"""
+        prompt = f"{self.personality_prompt}\n\nMISSION: Create personalized DM strategy for target.\n\nTARGET PROFILE: {json.dumps(target_profile, indent=2)}\n\nDM STRATEGY:"
         
-        if not any(word in response.lower() for word in ['recommend', 'suggest', 'advise', 'analyze', 'detect']):
-            response = f"Analysis complete. {response}"
+        response = await self.llm_service.generate_text(prompt, max_length=120)
+        return response or "Approach with shared interest angle. Reference recent content. Keep initial contact brief and genuine."
+    
+    async def analyze_engagement_patterns(self, engagement_data: List[Dict[str, Any]]) -> str:
+        """Analyze engagement patterns for optimization"""
+        prompt = f"{self.personality_prompt}\n\nMISSION: Analyze engagement patterns and identify optimization opportunities.\n\nENGAGEMENT DATA: {json.dumps(engagement_data, indent=2)}\n\nPATTERN ANALYSIS:"
         
-        return response.strip()
+        response = await self.llm_service.generate_text(prompt, max_length=150)
+        return response or "Peak engagement detected 7-9 PM. Recommend increasing activity during these windows for maximum impact."

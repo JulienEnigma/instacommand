@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
-from services.instagram_service import InstagramService
-from services.queue_service import QueueService, QueuedTask, TaskType
-from models import Target
+from backend.services.instagram_service import InstagramService
+from backend.services.queue_service import QueueService, QueuedTask, TaskType
+from backend.models import Target
 from datetime import datetime
 import uuid
 
@@ -27,12 +27,60 @@ class CommentRequest(BaseModel):
 @router.post("/scan")
 async def scan_hashtag(request: ScanRequest):
     """Scan hashtag for potential targets"""
-    raise HTTPException(status_code=401, detail="Not logged in to Instagram")
+    from backend.main import instagram_service, queue_service
+    
+    if not instagram_service.is_logged_in:
+        raise HTTPException(status_code=401, detail="Not logged in to Instagram")
+    
+    try:
+        task = QueuedTask(
+            id=str(uuid.uuid4()),
+            task_type=TaskType.SCAN,
+            target=request.hashtag,
+            data={"limit": request.limit},
+            scheduled_time=datetime.now()
+        )
+        
+        await queue_service.add_task(task)
+        
+        return {
+            "success": True,
+            "message": f"Scan task for #{request.hashtag} added to queue",
+            "task_id": task.id
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Scan error: {str(e)}")
 
 @router.post("/follow")
-async def follow_user(request: FollowRequest):
+async def follow_user(
+    request: FollowRequest,
+    queue_service = Depends(),
+    instagram_service = Depends()
+):
     """Follow a user"""
-    raise HTTPException(status_code=401, detail="Not logged in to Instagram")
+    if not instagram_service.is_logged_in:
+        raise HTTPException(status_code=401, detail="Not logged in to Instagram")
+    
+    try:
+        task = QueuedTask(
+            id=str(uuid.uuid4()),
+            task_type=TaskType.FOLLOW,
+            target=request.username,
+            data={},
+            scheduled_time=datetime.now()
+        )
+        
+        await queue_service.add_task(task)
+        
+        return {
+            "success": True,
+            "message": f"Follow task for @{request.username} added to queue",
+            "task_id": task.id
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Follow error: {str(e)}")
 
 @router.post("/dm")
 async def send_dm(
@@ -95,9 +143,34 @@ async def add_comment(
         raise HTTPException(status_code=500, detail=f"Comment error: {str(e)}")
 
 @router.get("/profile/stats")
-async def get_profile_stats():
+async def get_profile_stats(instagram_service = Depends()):
     """Get current user's profile statistics"""
-    raise HTTPException(status_code=401, detail="Not logged in to Instagram")
+    if not instagram_service.is_logged_in:
+        raise HTTPException(status_code=401, detail="Not logged in to Instagram")
+    
+    try:
+        stats = await instagram_service.get_profile_stats()
+        return stats
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Profile stats error: {str(e)}")
+
+@router.get("/mirror/data")
+async def get_mirror_data(profile_mirror_service = Depends()):
+    """Get current profile mirror data"""
+    try:
+        mirror_data = profile_mirror_service.get_current_mirror_data()
+        return mirror_data or {"error": "No mirror data available"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Mirror data error: {str(e)}")
+
+@router.get("/mirror/snapshots")
+async def get_daily_snapshots(days: int = 7, profile_mirror_service = Depends()):
+    """Get recent daily snapshots"""
+    try:
+        snapshots = profile_mirror_service.get_daily_snapshots(days)
+        return {"snapshots": snapshots}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Snapshots error: {str(e)}")
 
 @router.get("/mirror/screenshot")
 async def get_screenshot(instagram_service = Depends()):
@@ -137,3 +210,18 @@ async def resume_operations(queue_service = Depends()):
         return {"success": True, "message": "Operations resumed"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Resume error: {str(e)}")
+
+@router.get("/status")
+async def get_instagram_status():
+    """Get Instagram service status"""
+    from backend.main import instagram_service
+    
+    if instagram_service is None:
+        raise HTTPException(status_code=503, detail="Instagram service not initialized")
+    
+    return {
+        "logged_in": instagram_service.is_logged_in,
+        "simulate_mode": getattr(instagram_service, 'simulate_mode', False),
+        "rate_limits": getattr(instagram_service, 'rate_limits', {}),
+        "last_activity": getattr(instagram_service, 'last_activity_time', None)
+    }
