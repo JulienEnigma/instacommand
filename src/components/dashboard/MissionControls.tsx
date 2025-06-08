@@ -76,80 +76,71 @@ export const MissionControls = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="h-[calc(100%-90px)] p-6">
-        {/* Improved layout with proper spacing */}
-        <div className="flex flex-col gap-4 h-full">
+        <div className="flex flex-col gap-6 h-full">
           {/* First row - START and PAUSE */}
-          <div className="grid grid-cols-2 gap-4 flex-1">
-            {controls.slice(0, 2).map((control, index) => (
-              <button
-                key={index}
-                onClick={() => executeCommand(control.command, control.action)}
-                className={`
-                  group relative flex flex-col items-center justify-center p-4 h-full min-h-[80px]
-                  rounded-xl border backdrop-blur-xl
-                  font-semibold text-xs leading-tight tracking-wide
-                  transition-all duration-500 ease-out
-                  hover:scale-105 active:scale-95
-                  shadow-lg hover:shadow-xl
-                  ${control.glassStyle}
-                `}
-              >
-                {/* Glass overlay effect */}
-                <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                
-                {/* Inner shadow for depth */}
-                <div className="absolute inset-0 rounded-xl shadow-inner opacity-20" />
-                
-                {/* Content */}
-                <div className="relative z-10 flex flex-col items-center justify-center gap-2">
-                  <control.icon className="h-5 w-5 flex-shrink-0 drop-shadow-sm" />
-                  <span className="text-center break-words px-2 drop-shadow-sm">
-                    {control.label}
-                  </span>
-                </div>
-                
-                {/* Subtle glow effect on hover */}
-                <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10" 
-                     style={{ boxShadow: 'inset 0 0 20px currentColor' }} />
-              </button>
-            ))}
+          <div className="grid grid-cols-2 gap-6 flex-1">
+            {controls.slice(0, 2).map((control, index) => {
+              const IconComponent = control.icon;
+              return (
+                <button
+                  key={index}
+                  onClick={() => executeCommand(control.command, control.action)}
+                  className={`
+                    group relative flex flex-col items-center justify-center p-6 h-full min-h-[100px]
+                    rounded-xl border backdrop-blur-xl
+                    font-semibold text-xs leading-tight tracking-wide
+                    transition-all duration-500 ease-out
+                    hover:scale-105 active:scale-95
+                    shadow-lg hover:shadow-xl
+                    ${control.glassStyle}
+                  `}
+                >
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute inset-0 rounded-xl shadow-inner opacity-20" />
+                  <div className="relative z-10 flex flex-col items-center justify-center gap-3">
+                    <IconComponent className="h-6 w-6 flex-shrink-0 drop-shadow-sm" />
+                    <span className="text-center break-words px-2 drop-shadow-sm">
+                      {control.label}
+                    </span>
+                  </div>
+                  <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10" 
+                       style={{ boxShadow: 'inset 0 0 20px currentColor' }} />
+                </button>
+              );
+            })}
           </div>
 
           {/* Second row - REFLEX and CLEAR */}
-          <div className="grid grid-cols-2 gap-4 flex-1">
-            {controls.slice(2, 4).map((control, index) => (
-              <button
-                key={index + 2}
-                onClick={() => executeCommand(control.command, control.action)}
-                className={`
-                  group relative flex flex-col items-center justify-center p-4 h-full min-h-[80px]
-                  rounded-xl border backdrop-blur-xl
-                  font-semibold text-xs leading-tight tracking-wide
-                  transition-all duration-500 ease-out
-                  hover:scale-105 active:scale-95
-                  shadow-lg hover:shadow-xl
-                  ${control.glassStyle}
-                `}
-              >
-                {/* Glass overlay effect */}
-                <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                
-                {/* Inner shadow for depth */}
-                <div className="absolute inset-0 rounded-xl shadow-inner opacity-20" />
-                
-                {/* Content */}
-                <div className="relative z-10 flex flex-col items-center justify-center gap-2">
-                  <control.icon className="h-5 w-5 flex-shrink-0 drop-shadow-sm" />
-                  <span className="text-center break-words px-2 drop-shadow-sm">
-                    {control.label}
-                  </span>
-                </div>
-                
-                {/* Subtle glow effect on hover */}
-                <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10" 
-                     style={{ boxShadow: 'inset 0 0 20px currentColor' }} />
-              </button>
-            ))}
+          <div className="grid grid-cols-2 gap-6 flex-1">
+            {controls.slice(2, 4).map((control, index) => {
+              const IconComponent = control.icon;
+              return (
+                <button
+                  key={index + 2}
+                  onClick={() => executeCommand(control.command, control.action)}
+                  className={`
+                    group relative flex flex-col items-center justify-center p-6 h-full min-h-[100px]
+                    rounded-xl border backdrop-blur-xl
+                    font-semibold text-xs leading-tight tracking-wide
+                    transition-all duration-500 ease-out
+                    hover:scale-105 active:scale-95
+                    shadow-lg hover:shadow-xl
+                    ${control.glassStyle}
+                  `}
+                >
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute inset-0 rounded-xl shadow-inner opacity-20" />
+                  <div className="relative z-10 flex flex-col items-center justify-center gap-3">
+                    <IconComponent className="h-6 w-6 flex-shrink-0 drop-shadow-sm" />
+                    <span className="text-center break-words px-2 drop-shadow-sm">
+                      {control.label}
+                    </span>
+                  </div>
+                  <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10" 
+                       style={{ boxShadow: 'inset 0 0 20px currentColor' }} />
+                </button>
+              );
+            })}
           </div>
 
           {/* Third row - TERMINATE (full width) */}
@@ -157,7 +148,7 @@ export const MissionControls = () => {
             <button
               onClick={() => executeCommand(controls[4].command, controls[4].action)}
               className={`
-                group relative flex flex-col items-center justify-center p-4 w-full h-full min-h-[80px]
+                group relative flex flex-col items-center justify-center p-6 w-full h-full min-h-[100px]
                 rounded-xl border backdrop-blur-xl
                 font-semibold text-xs leading-tight tracking-wide
                 transition-all duration-500 ease-out
@@ -166,21 +157,14 @@ export const MissionControls = () => {
                 ${controls[4].glassStyle}
               `}
             >
-              {/* Glass overlay effect */}
               <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              
-              {/* Inner shadow for depth */}
               <div className="absolute inset-0 rounded-xl shadow-inner opacity-20" />
-              
-              {/* Content */}
-              <div className="relative z-10 flex flex-col items-center justify-center gap-2">
-                <controls[4].icon className="h-5 w-5 flex-shrink-0 drop-shadow-sm" />
+              <div className="relative z-10 flex flex-col items-center justify-center gap-3">
+                <Power className="h-6 w-6 flex-shrink-0 drop-shadow-sm" />
                 <span className="text-center break-words px-2 drop-shadow-sm">
                   {controls[4].label}
                 </span>
               </div>
-              
-              {/* Subtle glow effect on hover */}
               <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10" 
                    style={{ boxShadow: 'inset 0 0 20px currentColor' }} />
             </button>
